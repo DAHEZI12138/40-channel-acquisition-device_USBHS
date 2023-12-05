@@ -1,0 +1,595 @@
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 1
+
+
+   1              		.cpu cortex-m7
+   2              		.arch armv7e-m
+   3              		.fpu fpv5-d16
+   4              		.eabi_attribute 28, 1
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 1
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.file	"usbd_custom_hid_if.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text.CUSTOM_HID_Init_HS,"ax",%progbits
+  19              		.align	1
+  20              		.syntax unified
+  21              		.thumb
+  22              		.thumb_func
+  24              	CUSTOM_HID_Init_HS:
+  25              	.LFB148:
+  26              		.file 1 "USB_DEVICE/App/usbd_custom_hid_if.c"
+   1:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN Header */
+   2:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+   3:USB_DEVICE/App/usbd_custom_hid_if.c ****  ******************************************************************************
+   4:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @file           : usbd_custom_hid_if.c
+   5:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @version        : v1.0_Cube
+   6:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief          : USB Device Custom HID interface file.
+   7:USB_DEVICE/App/usbd_custom_hid_if.c ****  ******************************************************************************
+   8:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @attention
+   9:USB_DEVICE/App/usbd_custom_hid_if.c ****  *
+  10:USB_DEVICE/App/usbd_custom_hid_if.c ****  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
+  11:USB_DEVICE/App/usbd_custom_hid_if.c ****  * All rights reserved.</center></h2>
+  12:USB_DEVICE/App/usbd_custom_hid_if.c ****  *
+  13:USB_DEVICE/App/usbd_custom_hid_if.c ****  * This software component is licensed by ST under Ultimate Liberty license
+  14:USB_DEVICE/App/usbd_custom_hid_if.c ****  * SLA0044, the "License"; You may not use this file except in compliance with
+  15:USB_DEVICE/App/usbd_custom_hid_if.c ****  * the License. You may obtain a copy of the License at:
+  16:USB_DEVICE/App/usbd_custom_hid_if.c ****  *                             www.st.com/SLA0044
+  17:USB_DEVICE/App/usbd_custom_hid_if.c ****  *
+  18:USB_DEVICE/App/usbd_custom_hid_if.c ****  ******************************************************************************
+  19:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  20:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END Header */
+  21:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  22:USB_DEVICE/App/usbd_custom_hid_if.c **** /* Includes ------------------------------------------------------------------*/
+  23:USB_DEVICE/App/usbd_custom_hid_if.c **** #include <cmsis_os2.h>
+  24:USB_DEVICE/App/usbd_custom_hid_if.c **** #include "usbd_custom_hid_if.h"
+  25:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  26:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN INCLUDE */
+  27:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  28:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END INCLUDE */
+  29:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  30:USB_DEVICE/App/usbd_custom_hid_if.c **** /* Private typedef -----------------------------------------------------------*/
+  31:USB_DEVICE/App/usbd_custom_hid_if.c **** /* Private define ------------------------------------------------------------*/
+  32:USB_DEVICE/App/usbd_custom_hid_if.c **** /* Private macro -------------------------------------------------------------*/
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 2
+
+
+  33:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  34:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN PV */
+  35:USB_DEVICE/App/usbd_custom_hid_if.c **** /* Private variables ---------------------------------------------------------*/
+  36:USB_DEVICE/App/usbd_custom_hid_if.c **** extern uint8_t data_s[24];
+  37:USB_DEVICE/App/usbd_custom_hid_if.c **** extern osEventFlagsId_t eventHandle;
+  38:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END PV */
+  39:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  40:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @addtogroup STM32_USB_OTG_DEVICE_LIBRARY
+  41:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Usb device.
+  42:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+  43:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  44:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  45:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @addtogroup USBD_CUSTOM_HID
+  46:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+  47:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  48:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  49:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @defgroup USBD_CUSTOM_HID_Private_TypesDefinitions USBD_CUSTOM_HID_Private_TypesDefinitions
+  50:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Private types.
+  51:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+  52:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  53:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  54:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN PRIVATE_TYPES */
+  55:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  56:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END PRIVATE_TYPES */
+  57:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  58:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+  59:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @}
+  60:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  61:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  62:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @defgroup USBD_CUSTOM_HID_Private_Defines USBD_CUSTOM_HID_Private_Defines
+  63:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Private defines.
+  64:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+  65:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  66:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  67:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN PRIVATE_DEFINES */
+  68:USB_DEVICE/App/usbd_custom_hid_if.c **** extern const uint8_t ITR_EVENT; //设置事件掩码的位 0
+  69:USB_DEVICE/App/usbd_custom_hid_if.c **** extern const uint8_t CMD_EVENT; //设置事件掩码的位 1
+  70:USB_DEVICE/App/usbd_custom_hid_if.c **** extern const uint8_t REG_EVENT; //设置事件掩码的位 2
+  71:USB_DEVICE/App/usbd_custom_hid_if.c **** extern const uint8_t SELF_TEST_EVENT;
+  72:USB_DEVICE/App/usbd_custom_hid_if.c **** extern const uint8_t NORMAL_SIG_EVENT;
+  73:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END PRIVATE_DEFINES */
+  74:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  75:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+  76:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @}
+  77:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  78:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  79:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @defgroup USBD_CUSTOM_HID_Private_Macros USBD_CUSTOM_HID_Private_Macros
+  80:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Private macros.
+  81:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+  82:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  83:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  84:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN PRIVATE_MACRO */
+  85:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  86:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END PRIVATE_MACRO */
+  87:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  88:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+  89:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @}
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 3
+
+
+  90:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  91:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  92:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @defgroup USBD_CUSTOM_HID_Private_Variables USBD_CUSTOM_HID_Private_Variables
+  93:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Private variables.
+  94:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+  95:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+  96:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+  97:USB_DEVICE/App/usbd_custom_hid_if.c **** /** Usb custom HID report descriptor. */
+  98:USB_DEVICE/App/usbd_custom_hid_if.c **** __ALIGN_BEGIN static uint8_t CUSTOM_HID_ReportDesc_HS[USBD_CUSTOM_HID_REPORT_DESC_SIZE] __ALIGN_END
+  99:USB_DEVICE/App/usbd_custom_hid_if.c ****         {
+ 100:USB_DEVICE/App/usbd_custom_hid_if.c ****                 /* USER CODE BEGIN 1 */
+ 101:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x05, 0x01,       // USAGE_PAGE (Generic Desktop)
+ 102:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x09, 0x00,       // USAGE (Undefined)
+ 103:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0xa1, 0x01,       // COLLECTION (Application)
+ 104:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x09, 0x00,       //   USAGE (Undefined)
+ 105:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x15, 0x00,       //   LOGICAL_MINIMUM (0)
+ 106:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x26, 0xff, 0x00, //   LOGICAL_MAXIMUM (255)
+ 107:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x95, 0x01,       //   REPORT_COUNT (64)
+ 108:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x75, 0x08,       //   REPORT_SIZE (8)
+ 109:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x81, 0x00,       //   INPUT (Data,Ary,Abs)
+ 110:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x09, 0x00,       //   USAGE (Undefined)
+ 111:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x15, 0x00,       //   LOGICAL_MINIMUM (0)
+ 112:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x26, 0xff, 0x00, //   LOGICAL_MAXIMUM (255)
+ 113:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0x91, 0x00,       //   OUTPUT (Data,Ary,Abs)
+ 114:USB_DEVICE/App/usbd_custom_hid_if.c ****                 /* USER CODE END 1 */
+ 115:USB_DEVICE/App/usbd_custom_hid_if.c ****                 0xC0 /*     END_COLLECTION             */
+ 116:USB_DEVICE/App/usbd_custom_hid_if.c ****         };
+ 117:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN PRIVATE_VARIABLES */
+ 118:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 119:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END PRIVATE_VARIABLES */
+ 120:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 121:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+ 122:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @}
+ 123:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 124:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 125:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @defgroup USBD_CUSTOM_HID_Exported_Variables USBD_CUSTOM_HID_Exported_Variables
+ 126:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Public variables.
+ 127:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+ 128:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 129:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 130:USB_DEVICE/App/usbd_custom_hid_if.c **** extern USBD_HandleTypeDef hUsbDeviceHS;
+ 131:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 132:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN EXPORTED_VARIABLES */
+ 133:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 134:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE END EXPORTED_VARIABLES */
+ 135:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+ 136:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @}
+ 137:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 138:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 139:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @defgroup USBD_CUSTOM_HID_Private_FunctionPrototypes USBD_CUSTOM_HID_Private_FunctionPrototypes
+ 140:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Private functions declaration.
+ 141:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+ 142:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 143:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 144:USB_DEVICE/App/usbd_custom_hid_if.c **** static int8_t CUSTOM_HID_Init_HS(void);
+ 145:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 146:USB_DEVICE/App/usbd_custom_hid_if.c **** static int8_t CUSTOM_HID_DeInit_HS(void);
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 4
+
+
+ 147:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 148:USB_DEVICE/App/usbd_custom_hid_if.c **** static int8_t CUSTOM_HID_OutEvent_HS(uint8_t event_idx, uint8_t state);
+ 149:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 150:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+ 151:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @}
+ 152:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 153:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 154:USB_DEVICE/App/usbd_custom_hid_if.c **** USBD_CUSTOM_HID_ItfTypeDef USBD_CustomHID_fops_HS =
+ 155:USB_DEVICE/App/usbd_custom_hid_if.c ****         {
+ 156:USB_DEVICE/App/usbd_custom_hid_if.c ****                 CUSTOM_HID_ReportDesc_HS,
+ 157:USB_DEVICE/App/usbd_custom_hid_if.c ****                 CUSTOM_HID_Init_HS,
+ 158:USB_DEVICE/App/usbd_custom_hid_if.c ****                 CUSTOM_HID_DeInit_HS,
+ 159:USB_DEVICE/App/usbd_custom_hid_if.c ****                 CUSTOM_HID_OutEvent_HS};
+ 160:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 161:USB_DEVICE/App/usbd_custom_hid_if.c **** /** @defgroup USBD_CUSTOM_HID_Private_Functions USBD_CUSTOM_HID_Private_Functions
+ 162:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief Private functions.
+ 163:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @{
+ 164:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 165:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 166:USB_DEVICE/App/usbd_custom_hid_if.c **** /* Private functions ---------------------------------------------------------*/
+ 167:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 168:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+ 169:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief  Initializes the CUSTOM HID media low layer
+ 170:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @retval USBD_OK if all operations are OK else USBD_FAIL
+ 171:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 172:USB_DEVICE/App/usbd_custom_hid_if.c **** static int8_t CUSTOM_HID_Init_HS(void) {
+  27              		.loc 1 172 40 view -0
+  28              		.cfi_startproc
+  29              		@ args = 0, pretend = 0, frame = 0
+  30              		@ frame_needed = 0, uses_anonymous_args = 0
+  31              		@ link register save eliminated.
+ 173:USB_DEVICE/App/usbd_custom_hid_if.c ****     /* USER CODE BEGIN 8 */
+ 174:USB_DEVICE/App/usbd_custom_hid_if.c ****     return (USBD_OK);
+  32              		.loc 1 174 5 view .LVU1
+ 175:USB_DEVICE/App/usbd_custom_hid_if.c ****     /* USER CODE END 8 */
+ 176:USB_DEVICE/App/usbd_custom_hid_if.c **** }
+  33              		.loc 1 176 1 is_stmt 0 view .LVU2
+  34 0000 0020     		movs	r0, #0
+  35 0002 7047     		bx	lr
+  36              		.cfi_endproc
+  37              	.LFE148:
+  39              		.section	.text.CUSTOM_HID_DeInit_HS,"ax",%progbits
+  40              		.align	1
+  41              		.syntax unified
+  42              		.thumb
+  43              		.thumb_func
+  45              	CUSTOM_HID_DeInit_HS:
+  46              	.LFB149:
+ 177:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 178:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+ 179:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief  DeInitializes the CUSTOM HID media low layer
+ 180:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @retval USBD_OK if all operations are OK else USBD_FAIL
+ 181:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 182:USB_DEVICE/App/usbd_custom_hid_if.c **** static int8_t CUSTOM_HID_DeInit_HS(void) {
+  47              		.loc 1 182 42 is_stmt 1 view -0
+  48              		.cfi_startproc
+  49              		@ args = 0, pretend = 0, frame = 0
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 5
+
+
+  50              		@ frame_needed = 0, uses_anonymous_args = 0
+  51              		@ link register save eliminated.
+ 183:USB_DEVICE/App/usbd_custom_hid_if.c ****     /* USER CODE BEGIN 9 */
+ 184:USB_DEVICE/App/usbd_custom_hid_if.c ****     return (USBD_OK);
+  52              		.loc 1 184 5 view .LVU4
+ 185:USB_DEVICE/App/usbd_custom_hid_if.c ****     /* USER CODE END 9 */
+ 186:USB_DEVICE/App/usbd_custom_hid_if.c **** }
+  53              		.loc 1 186 1 is_stmt 0 view .LVU5
+  54 0000 0020     		movs	r0, #0
+  55 0002 7047     		bx	lr
+  56              		.cfi_endproc
+  57              	.LFE149:
+  59              		.section	.text.CUSTOM_HID_OutEvent_HS,"ax",%progbits
+  60              		.align	1
+  61              		.syntax unified
+  62              		.thumb
+  63              		.thumb_func
+  65              	CUSTOM_HID_OutEvent_HS:
+  66              	.LVL0:
+  67              	.LFB150:
+ 187:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 188:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+ 189:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief  Manage the CUSTOM HID class events
+ 190:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @param  event_idx: Event index
+ 191:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @param  state: Event state
+ 192:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @retval USBD_OK if all operations are OK else USBD_FAIL
+ 193:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 194:USB_DEVICE/App/usbd_custom_hid_if.c **** static int8_t CUSTOM_HID_OutEvent_HS(uint8_t event_idx, uint8_t state) {
+  68              		.loc 1 194 72 is_stmt 1 view -0
+  69              		.cfi_startproc
+  70              		@ args = 0, pretend = 0, frame = 0
+  71              		@ frame_needed = 0, uses_anonymous_args = 0
+  72              		.loc 1 194 72 is_stmt 0 view .LVU7
+  73 0000 10B5     		push	{r4, lr}
+  74              		.cfi_def_cfa_offset 8
+  75              		.cfi_offset 4, -8
+  76              		.cfi_offset 14, -4
+ 195:USB_DEVICE/App/usbd_custom_hid_if.c ****     /* USER CODE BEGIN 10 */
+ 196:USB_DEVICE/App/usbd_custom_hid_if.c ****     UNUSED(event_idx);
+  77              		.loc 1 196 5 is_stmt 1 view .LVU8
+ 197:USB_DEVICE/App/usbd_custom_hid_if.c ****     UNUSED(state);
+  78              		.loc 1 197 5 view .LVU9
+ 198:USB_DEVICE/App/usbd_custom_hid_if.c ****     USBD_CUSTOM_HID_HandleTypeDef *hhid;
+  79              		.loc 1 198 5 view .LVU10
+ 199:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 200:USB_DEVICE/App/usbd_custom_hid_if.c ****     if (hUsbDeviceHS.pClassData == NULL) {
+  80              		.loc 1 200 5 view .LVU11
+  81              		.loc 1 200 21 is_stmt 0 view .LVU12
+  82 0002 254B     		ldr	r3, .L17
+  83 0004 D3F8BC42 		ldr	r4, [r3, #700]
+  84              		.loc 1 200 8 view .LVU13
+  85 0008 002C     		cmp	r4, #0
+  86 000a 42D0     		beq	.L10
+ 201:USB_DEVICE/App/usbd_custom_hid_if.c ****         return (uint8_t) USBD_FAIL;
+ 202:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 203:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 204:USB_DEVICE/App/usbd_custom_hid_if.c ****     hhid = hUsbDeviceHS.pClassData;
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 6
+
+
+  87              		.loc 1 204 5 is_stmt 1 view .LVU14
+  88              	.LVL1:
+ 205:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 206:USB_DEVICE/App/usbd_custom_hid_if.c ****     if (hhid->Report_buf[0] == 0x01) {
+  89              		.loc 1 206 5 view .LVU15
+  90              		.loc 1 206 25 is_stmt 0 view .LVU16
+  91 000c 2378     		ldrb	r3, [r4]	@ zero_extendqisi2
+  92              		.loc 1 206 8 view .LVU17
+  93 000e 012B     		cmp	r3, #1
+  94 0010 10D0     		beq	.L12
+  95              	.LVL2:
+  96              	.L5:
+ 207:USB_DEVICE/App/usbd_custom_hid_if.c ****         osEventFlagsSet(eventHandle, REG_EVENT); //读寄存器的指令
+ 208:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 209:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 210:USB_DEVICE/App/usbd_custom_hid_if.c ****     if (hhid->Report_buf[0] == 0x02) {
+  97              		.loc 1 210 5 is_stmt 1 view .LVU18
+  98              		.loc 1 210 25 is_stmt 0 view .LVU19
+  99 0012 2378     		ldrb	r3, [r4]	@ zero_extendqisi2
+ 100              		.loc 1 210 8 view .LVU20
+ 101 0014 022B     		cmp	r3, #2
+ 102 0016 14D0     		beq	.L13
+ 103              	.L6:
+ 211:USB_DEVICE/App/usbd_custom_hid_if.c ****         HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_RESET);
+ 212:USB_DEVICE/App/usbd_custom_hid_if.c ****         osEventFlagsSet(eventHandle, CMD_EVENT); //读数据的指令
+ 213:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 214:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 215:USB_DEVICE/App/usbd_custom_hid_if.c ****     if (hhid->Report_buf[0] == 0x03) {
+ 104              		.loc 1 215 5 is_stmt 1 view .LVU21
+ 105              		.loc 1 215 25 is_stmt 0 view .LVU22
+ 106 0018 2378     		ldrb	r3, [r4]	@ zero_extendqisi2
+ 107              		.loc 1 215 8 view .LVU23
+ 108 001a 032B     		cmp	r3, #3
+ 109 001c 1ED0     		beq	.L14
+ 110              	.L7:
+ 216:USB_DEVICE/App/usbd_custom_hid_if.c ****         HAL_GPIO_WritePin(LED0_GPIO_Port, LED0_Pin, GPIO_PIN_SET);
+ 217:USB_DEVICE/App/usbd_custom_hid_if.c ****         osEventFlagsClear(eventHandle, CMD_EVENT); //停止读数据的指令
+ 218:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 219:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 220:USB_DEVICE/App/usbd_custom_hid_if.c ****     if (hhid->Report_buf[0] == 0x04) {
+ 111              		.loc 1 220 5 is_stmt 1 view .LVU24
+ 112              		.loc 1 220 25 is_stmt 0 view .LVU25
+ 113 001e 2378     		ldrb	r3, [r4]	@ zero_extendqisi2
+ 114              		.loc 1 220 8 view .LVU26
+ 115 0020 042B     		cmp	r3, #4
+ 116 0022 28D0     		beq	.L15
+ 117              	.L8:
+ 221:USB_DEVICE/App/usbd_custom_hid_if.c ****         osEventFlagsSet(eventHandle, SELF_TEST_EVENT); //设置为自检
+ 222:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 223:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 224:USB_DEVICE/App/usbd_custom_hid_if.c ****     if (hhid->Report_buf[0] == 0x05) {
+ 118              		.loc 1 224 5 is_stmt 1 view .LVU27
+ 119              		.loc 1 224 25 is_stmt 0 view .LVU28
+ 120 0024 2378     		ldrb	r3, [r4]	@ zero_extendqisi2
+ 121              		.loc 1 224 8 view .LVU29
+ 122 0026 052B     		cmp	r3, #5
+ 123 0028 2CD0     		beq	.L16
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 7
+
+
+ 124              	.L9:
+ 225:USB_DEVICE/App/usbd_custom_hid_if.c ****         osEventFlagsSet(eventHandle, NORMAL_SIG_EVENT); //设置为正常输入
+ 226:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 227:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 228:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 229:USB_DEVICE/App/usbd_custom_hid_if.c ****     /* Start next USB packet transfer once data processing is completed */
+ 230:USB_DEVICE/App/usbd_custom_hid_if.c ****     USBD_CUSTOM_HID_ReceivePacket(&hUsbDeviceHS);
+ 125              		.loc 1 230 5 is_stmt 1 view .LVU30
+ 126 002a 1B48     		ldr	r0, .L17
+ 127 002c FFF7FEFF 		bl	USBD_CUSTOM_HID_ReceivePacket
+ 128              	.LVL3:
+ 231:USB_DEVICE/App/usbd_custom_hid_if.c ****     return (USBD_OK);
+ 129              		.loc 1 231 5 view .LVU31
+ 130              		.loc 1 231 12 is_stmt 0 view .LVU32
+ 131 0030 0020     		movs	r0, #0
+ 132              	.LVL4:
+ 133              	.L4:
+ 232:USB_DEVICE/App/usbd_custom_hid_if.c ****     /* USER CODE END 10 */
+ 233:USB_DEVICE/App/usbd_custom_hid_if.c **** }
+ 134              		.loc 1 233 1 view .LVU33
+ 135 0032 10BD     		pop	{r4, pc}
+ 136              	.LVL5:
+ 137              	.L12:
+ 207:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 138              		.loc 1 207 9 is_stmt 1 view .LVU34
+ 139 0034 194B     		ldr	r3, .L17+4
+ 140 0036 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 141              	.LVL6:
+ 207:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 142              		.loc 1 207 9 is_stmt 0 view .LVU35
+ 143 0038 194B     		ldr	r3, .L17+8
+ 144 003a 1868     		ldr	r0, [r3]
+ 145              	.LVL7:
+ 207:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 146              		.loc 1 207 9 view .LVU36
+ 147 003c FFF7FEFF 		bl	osEventFlagsSet
+ 148              	.LVL8:
+ 149 0040 E7E7     		b	.L5
+ 150              	.L13:
+ 211:USB_DEVICE/App/usbd_custom_hid_if.c ****         osEventFlagsSet(eventHandle, CMD_EVENT); //读数据的指令
+ 151              		.loc 1 211 9 is_stmt 1 view .LVU37
+ 152 0042 0022     		movs	r2, #0
+ 153 0044 4FF48071 		mov	r1, #256
+ 154 0048 1648     		ldr	r0, .L17+12
+ 155 004a FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 156              	.LVL9:
+ 212:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 157              		.loc 1 212 9 view .LVU38
+ 158 004e 164B     		ldr	r3, .L17+16
+ 159 0050 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 160 0052 134B     		ldr	r3, .L17+8
+ 161 0054 1868     		ldr	r0, [r3]
+ 162 0056 FFF7FEFF 		bl	osEventFlagsSet
+ 163              	.LVL10:
+ 164 005a DDE7     		b	.L6
+ 165              	.L14:
+ 216:USB_DEVICE/App/usbd_custom_hid_if.c ****         osEventFlagsClear(eventHandle, CMD_EVENT); //停止读数据的指令
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 8
+
+
+ 166              		.loc 1 216 9 view .LVU39
+ 167 005c 0122     		movs	r2, #1
+ 168 005e 4FF48071 		mov	r1, #256
+ 169 0062 1048     		ldr	r0, .L17+12
+ 170 0064 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 171              	.LVL11:
+ 217:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 172              		.loc 1 217 9 view .LVU40
+ 173 0068 0F4B     		ldr	r3, .L17+16
+ 174 006a 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 175 006c 0C4B     		ldr	r3, .L17+8
+ 176 006e 1868     		ldr	r0, [r3]
+ 177 0070 FFF7FEFF 		bl	osEventFlagsClear
+ 178              	.LVL12:
+ 179 0074 D3E7     		b	.L7
+ 180              	.L15:
+ 221:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 181              		.loc 1 221 9 view .LVU41
+ 182 0076 0D4B     		ldr	r3, .L17+20
+ 183 0078 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 184 007a 094B     		ldr	r3, .L17+8
+ 185 007c 1868     		ldr	r0, [r3]
+ 186 007e FFF7FEFF 		bl	osEventFlagsSet
+ 187              	.LVL13:
+ 188 0082 CFE7     		b	.L8
+ 189              	.L16:
+ 225:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 190              		.loc 1 225 9 view .LVU42
+ 191 0084 0A4B     		ldr	r3, .L17+24
+ 192 0086 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 193 0088 054B     		ldr	r3, .L17+8
+ 194 008a 1868     		ldr	r0, [r3]
+ 195 008c FFF7FEFF 		bl	osEventFlagsSet
+ 196              	.LVL14:
+ 197 0090 CBE7     		b	.L9
+ 198              	.LVL15:
+ 199              	.L10:
+ 201:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 200              		.loc 1 201 16 is_stmt 0 view .LVU43
+ 201 0092 0320     		movs	r0, #3
+ 202              	.LVL16:
+ 201:USB_DEVICE/App/usbd_custom_hid_if.c ****     }
+ 203              		.loc 1 201 16 view .LVU44
+ 204 0094 CDE7     		b	.L4
+ 205              	.L18:
+ 206 0096 00BF     		.align	2
+ 207              	.L17:
+ 208 0098 00000000 		.word	hUsbDeviceHS
+ 209 009c 00000000 		.word	REG_EVENT
+ 210 00a0 00000000 		.word	eventHandle
+ 211 00a4 00040258 		.word	1476527104
+ 212 00a8 00000000 		.word	CMD_EVENT
+ 213 00ac 00000000 		.word	SELF_TEST_EVENT
+ 214 00b0 00000000 		.word	NORMAL_SIG_EVENT
+ 215              		.cfi_endproc
+ 216              	.LFE150:
+ 218              		.section	.text.USBD_CUSTOM_HID_SendReport_HS,"ax",%progbits
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 9
+
+
+ 219              		.align	1
+ 220              		.global	USBD_CUSTOM_HID_SendReport_HS
+ 221              		.syntax unified
+ 222              		.thumb
+ 223              		.thumb_func
+ 225              	USBD_CUSTOM_HID_SendReport_HS:
+ 226              	.LVL17:
+ 227              	.LFB151:
+ 234:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 235:USB_DEVICE/App/usbd_custom_hid_if.c **** /* USER CODE BEGIN 11 */
+ 236:USB_DEVICE/App/usbd_custom_hid_if.c **** /**
+ 237:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @brief  Send the report to the Host
+ 238:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @param  report: The report to be sent
+ 239:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @param  len: The report length
+ 240:USB_DEVICE/App/usbd_custom_hid_if.c ****  * @retval USBD_OK if all operations are OK else USBD_FAIL
+ 241:USB_DEVICE/App/usbd_custom_hid_if.c ****  */
+ 242:USB_DEVICE/App/usbd_custom_hid_if.c **** 
+ 243:USB_DEVICE/App/usbd_custom_hid_if.c **** uint8_t USBD_CUSTOM_HID_SendReport_HS(uint8_t *report, uint16_t len) {
+ 228              		.loc 1 243 70 is_stmt 1 view -0
+ 229              		.cfi_startproc
+ 230              		@ args = 0, pretend = 0, frame = 0
+ 231              		@ frame_needed = 0, uses_anonymous_args = 0
+ 232              		.loc 1 243 70 is_stmt 0 view .LVU46
+ 233 0000 08B5     		push	{r3, lr}
+ 234              		.cfi_def_cfa_offset 8
+ 235              		.cfi_offset 3, -8
+ 236              		.cfi_offset 14, -4
+ 237 0002 0A46     		mov	r2, r1
+ 244:USB_DEVICE/App/usbd_custom_hid_if.c ****     return USBD_CUSTOM_HID_SendReport(&hUsbDeviceHS, report, len);
+ 238              		.loc 1 244 5 is_stmt 1 view .LVU47
+ 239              		.loc 1 244 12 is_stmt 0 view .LVU48
+ 240 0004 0146     		mov	r1, r0
+ 241              	.LVL18:
+ 242              		.loc 1 244 12 view .LVU49
+ 243 0006 0248     		ldr	r0, .L21
+ 244              	.LVL19:
+ 245              		.loc 1 244 12 view .LVU50
+ 246 0008 FFF7FEFF 		bl	USBD_CUSTOM_HID_SendReport
+ 247              	.LVL20:
+ 245:USB_DEVICE/App/usbd_custom_hid_if.c **** }
+ 248              		.loc 1 245 1 view .LVU51
+ 249 000c 08BD     		pop	{r3, pc}
+ 250              	.L22:
+ 251 000e 00BF     		.align	2
+ 252              	.L21:
+ 253 0010 00000000 		.word	hUsbDeviceHS
+ 254              		.cfi_endproc
+ 255              	.LFE151:
+ 257              		.global	USBD_CustomHID_fops_HS
+ 258              		.section	.data.CUSTOM_HID_ReportDesc_HS,"aw"
+ 259              		.align	2
+ 262              	CUSTOM_HID_ReportDesc_HS:
+ 263 0000 05010900 		.ascii	"\005\001\011\000\241\001\011\000\025\000&\377\000\225"
+ 263      A1010900 
+ 263      150026FF 
+ 263      0095
+ 264 000e 01750881 		.ascii	"\001u\010\201\000\011\000\025\000&\377\000\221\000\300"
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 10
+
+
+ 264      00090015 
+ 264      0026FF00 
+ 264      9100C0
+ 265              		.section	.data.USBD_CustomHID_fops_HS,"aw"
+ 266              		.align	2
+ 269              	USBD_CustomHID_fops_HS:
+ 270 0000 00000000 		.word	CUSTOM_HID_ReportDesc_HS
+ 271 0004 00000000 		.word	CUSTOM_HID_Init_HS
+ 272 0008 00000000 		.word	CUSTOM_HID_DeInit_HS
+ 273 000c 00000000 		.word	CUSTOM_HID_OutEvent_HS
+ 274              		.text
+ 275              	.Letext0:
+ 276              		.file 2 "d:\\tool\\gcc-arm-none-eabi\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 277              		.file 3 "d:\\tool\\gcc-arm-none-eabi\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 278              		.file 4 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h"
+ 279              		.file 5 "Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h743xx.h"
+ 280              		.file 6 "Middlewares/ST/STM32_USB_Device_Library/Core/Inc/usbd_def.h"
+ 281              		.file 7 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h"
+ 282              		.file 8 "Middlewares/ST/STM32_USB_Device_Library/Class/CustomHID/Inc/usbd_customhid.h"
+ 283              		.file 9 "USB_DEVICE/App/usbd_custom_hid_if.h"
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s 			page 11
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 usbd_custom_hid_if.c
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:19     .text.CUSTOM_HID_Init_HS:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:24     .text.CUSTOM_HID_Init_HS:00000000 CUSTOM_HID_Init_HS
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:40     .text.CUSTOM_HID_DeInit_HS:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:45     .text.CUSTOM_HID_DeInit_HS:00000000 CUSTOM_HID_DeInit_HS
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:60     .text.CUSTOM_HID_OutEvent_HS:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:65     .text.CUSTOM_HID_OutEvent_HS:00000000 CUSTOM_HID_OutEvent_HS
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:208    .text.CUSTOM_HID_OutEvent_HS:00000098 $d
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:219    .text.USBD_CUSTOM_HID_SendReport_HS:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:225    .text.USBD_CUSTOM_HID_SendReport_HS:00000000 USBD_CUSTOM_HID_SendReport_HS
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:253    .text.USBD_CUSTOM_HID_SendReport_HS:00000010 $d
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:269    .data.USBD_CustomHID_fops_HS:00000000 USBD_CustomHID_fops_HS
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:259    .data.CUSTOM_HID_ReportDesc_HS:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:262    .data.CUSTOM_HID_ReportDesc_HS:00000000 CUSTOM_HID_ReportDesc_HS
+C:\Users\MSI_NB\AppData\Local\Temp\cc1Oihkc.s:266    .data.USBD_CustomHID_fops_HS:00000000 $d
+
+UNDEFINED SYMBOLS
+USBD_CUSTOM_HID_ReceivePacket
+osEventFlagsSet
+HAL_GPIO_WritePin
+osEventFlagsClear
+hUsbDeviceHS
+REG_EVENT
+eventHandle
+CMD_EVENT
+SELF_TEST_EVENT
+NORMAL_SIG_EVENT
+USBD_CUSTOM_HID_SendReport

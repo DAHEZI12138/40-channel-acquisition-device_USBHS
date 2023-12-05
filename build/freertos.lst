@@ -1,0 +1,2220 @@
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 1
+
+
+   1              		.cpu cortex-m7
+   2              		.arch armv7e-m
+   3              		.fpu fpv5-d16
+   4              		.eabi_attribute 28, 1
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 1
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.file	"freertos.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text.StartDefaultTask,"ax",%progbits
+  19              		.align	1
+  20              		.global	StartDefaultTask
+  21              		.syntax unified
+  22              		.thumb
+  23              		.thumb_func
+  25              	StartDefaultTask:
+  26              	.LVL0:
+  27              	.LFB153:
+  28              		.file 1 "Core/Src/freertos.c"
+   1:Core/Src/freertos.c **** /* USER CODE BEGIN Header */
+   2:Core/Src/freertos.c **** /**
+   3:Core/Src/freertos.c ****  ******************************************************************************
+   4:Core/Src/freertos.c ****  * File Name          : freertos.c
+   5:Core/Src/freertos.c ****  * Description        : Code for freertos applications
+   6:Core/Src/freertos.c ****  ******************************************************************************
+   7:Core/Src/freertos.c ****  * @attention
+   8:Core/Src/freertos.c ****  *
+   9:Core/Src/freertos.c ****  * <h2><center>&copy; Copyright (c) 2022 STMicroelectronics.
+  10:Core/Src/freertos.c ****  * All rights reserved.</center></h2>
+  11:Core/Src/freertos.c ****  *
+  12:Core/Src/freertos.c ****  * This software component is licensed by ST under Ultimate Liberty license
+  13:Core/Src/freertos.c ****  * SLA0044, the "License"; You may not use this file except in compliance with
+  14:Core/Src/freertos.c ****  * the License. You may obtain a copy of the License at:
+  15:Core/Src/freertos.c ****  *                             www.st.com/SLA0044
+  16:Core/Src/freertos.c ****  *
+  17:Core/Src/freertos.c ****  ******************************************************************************
+  18:Core/Src/freertos.c ****  */
+  19:Core/Src/freertos.c **** /* USER CODE END Header */
+  20:Core/Src/freertos.c **** 
+  21:Core/Src/freertos.c **** /* Includes ------------------------------------------------------------------*/
+  22:Core/Src/freertos.c **** #include <tim.h>
+  23:Core/Src/freertos.c **** #include "FreeRTOS.h"
+  24:Core/Src/freertos.c **** #include "task.h"
+  25:Core/Src/freertos.c **** #include "main.h"
+  26:Core/Src/freertos.c **** #include "cmsis_os.h"
+  27:Core/Src/freertos.c **** 
+  28:Core/Src/freertos.c **** /* Private includes ----------------------------------------------------------*/
+  29:Core/Src/freertos.c **** /* USER CODE BEGIN Includes */
+  30:Core/Src/freertos.c **** #include "gpio.h"
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 2
+
+
+  31:Core/Src/freertos.c **** #include "spi.h"
+  32:Core/Src/freertos.c **** #include "ads1299.h"
+  33:Core/Src/freertos.c **** #include "usbd_custom_hid_if.h"
+  34:Core/Src/freertos.c **** 
+  35:Core/Src/freertos.c **** /* USER CODE END Includes */
+  36:Core/Src/freertos.c **** 
+  37:Core/Src/freertos.c **** /* Private typedef -----------------------------------------------------------*/
+  38:Core/Src/freertos.c **** /* USER CODE BEGIN PTD */
+  39:Core/Src/freertos.c **** 
+  40:Core/Src/freertos.c **** /* CRC校验开关*/
+  41:Core/Src/freertos.c **** #define _CRC_ 1
+  42:Core/Src/freertos.c **** 
+  43:Core/Src/freertos.c **** /* USER CODE END PTD */
+  44:Core/Src/freertos.c **** 
+  45:Core/Src/freertos.c **** /* Private define ------------------------------------------------------------*/
+  46:Core/Src/freertos.c **** /* USER CODE BEGIN PD */
+  47:Core/Src/freertos.c **** extern const uint8_t ITR_EVENT;   // 璁剧疆浜嬩欢鎺╃爜鐨勪綅 0
+  48:Core/Src/freertos.c **** extern const uint8_t CMD_EVENT;   // 璁剧疆浜嬩欢鎺╃爜鐨勪綅 1
+  49:Core/Src/freertos.c **** extern const uint8_t REG_EVENT;   // 璁剧疆浜嬩欢鎺╃爜鐨勪綅 2
+  50:Core/Src/freertos.c **** extern const uint8_t READY_EVENT; // 璁剧疆浜嬩欢鎺╃爜鐨勪綅 3
+  51:Core/Src/freertos.c **** extern const uint8_t SELF_TEST_EVENT;
+  52:Core/Src/freertos.c **** extern const uint8_t NORMAL_SIG_EVENT;
+  53:Core/Src/freertos.c **** 
+  54:Core/Src/freertos.c **** extern USBD_HandleTypeDef hUsbDeviceHS;
+  55:Core/Src/freertos.c **** extern int itr_num;
+  56:Core/Src/freertos.c **** int buffer_select_flag = 0;
+  57:Core/Src/freertos.c **** const int itr_num_max = 25;
+  58:Core/Src/freertos.c **** 
+  59:Core/Src/freertos.c **** /* 存储buffer定义 */
+  60:Core/Src/freertos.c **** #if _CRC_
+  61:Core/Src/freertos.c **** const int send_max_size =
+  62:Core/Src/freertos.c ****     (40 * 3 + 5 * 3) * itr_num_max + 1; // 40*3*itr_num_max 是数据   5*3是电极脱落检测 /*
+  63:Core/Src/freertos.c **** uint8_t data_save_a[(40 * 3 + 5 * 3) * 25 + 1] = {0};
+  64:Core/Src/freertos.c **** uint8_t data_save_b[(40 * 3 + 5 * 3) * 25 + 1] = {0};
+  65:Core/Src/freertos.c **** #else
+  66:Core/Src/freertos.c **** const int send_max_size = (40 * 3 + 5 * 3) * itr_num_max;
+  67:Core/Src/freertos.c **** uint8_t data_save_a[(40 * 3 + 5 * 3) * 25] = {0};
+  68:Core/Src/freertos.c **** uint8_t data_save_b[(40 * 3 + 5 * 3) * 25] = {0};
+  69:Core/Src/freertos.c **** #endif
+  70:Core/Src/freertos.c **** 
+  71:Core/Src/freertos.c **** uint8_t send1[3] = {0XAA, 0XAA, 0XAA};
+  72:Core/Src/freertos.c **** uint8_t send2[24] = {0};
+  73:Core/Src/freertos.c **** /* USER CODE END PD */
+  74:Core/Src/freertos.c **** 
+  75:Core/Src/freertos.c **** /* Private macro -------------------------------------------------------------*/
+  76:Core/Src/freertos.c **** /* USER CODE BEGIN PM */
+  77:Core/Src/freertos.c **** 
+  78:Core/Src/freertos.c **** /* USER CODE END PM */
+  79:Core/Src/freertos.c **** 
+  80:Core/Src/freertos.c **** /* Private variables ---------------------------------------------------------*/
+  81:Core/Src/freertos.c **** /* USER CODE BEGIN Variables */
+  82:Core/Src/freertos.c **** 
+  83:Core/Src/freertos.c **** /* USER CODE END Variables */
+  84:Core/Src/freertos.c **** /* Definitions for defaultTask */
+  85:Core/Src/freertos.c **** osThreadId_t defaultTaskHandle;
+  86:Core/Src/freertos.c **** const osThreadAttr_t defaultTask_attributes = {
+  87:Core/Src/freertos.c ****     .name = "defaultTask",
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 3
+
+
+  88:Core/Src/freertos.c ****     .stack_size = 128 * 4,
+  89:Core/Src/freertos.c ****     .priority = (osPriority_t)osPriorityNormal,
+  90:Core/Src/freertos.c **** };
+  91:Core/Src/freertos.c **** /* Definitions for data_read */
+  92:Core/Src/freertos.c **** osThreadId_t data_readHandle;
+  93:Core/Src/freertos.c **** const osThreadAttr_t data_read_attributes = {
+  94:Core/Src/freertos.c ****     .name = "data_read",
+  95:Core/Src/freertos.c ****     .stack_size = 512 * 4,
+  96:Core/Src/freertos.c ****     .priority = (osPriority_t)osPriorityLow,
+  97:Core/Src/freertos.c **** };
+  98:Core/Src/freertos.c **** /* Definitions for all_reg_read */
+  99:Core/Src/freertos.c **** osThreadId_t all_reg_readHandle;
+ 100:Core/Src/freertos.c **** const osThreadAttr_t all_reg_read_attributes = {
+ 101:Core/Src/freertos.c ****     .name = "all_reg_read",
+ 102:Core/Src/freertos.c ****     .stack_size = 512 * 4,
+ 103:Core/Src/freertos.c ****     .priority = (osPriority_t)osPriorityLow,
+ 104:Core/Src/freertos.c **** };
+ 105:Core/Src/freertos.c **** /* Definitions for data_send */
+ 106:Core/Src/freertos.c **** osThreadId_t data_sendHandle;
+ 107:Core/Src/freertos.c **** const osThreadAttr_t data_send_attributes = {
+ 108:Core/Src/freertos.c ****     .name = "data_send",
+ 109:Core/Src/freertos.c ****     .stack_size = 512 * 4,
+ 110:Core/Src/freertos.c ****     .priority = (osPriority_t)osPriorityLow,
+ 111:Core/Src/freertos.c **** };
+ 112:Core/Src/freertos.c **** /* Definitions for self_test */
+ 113:Core/Src/freertos.c **** osThreadId_t self_testHandle;
+ 114:Core/Src/freertos.c **** const osThreadAttr_t self_test_attributes = {
+ 115:Core/Src/freertos.c ****     .name = "self_test",
+ 116:Core/Src/freertos.c ****     .stack_size = 128 * 4,
+ 117:Core/Src/freertos.c ****     .priority = (osPriority_t)osPriorityLow,
+ 118:Core/Src/freertos.c **** };
+ 119:Core/Src/freertos.c **** /* Definitions for normal_sig */
+ 120:Core/Src/freertos.c **** osThreadId_t normal_sigHandle;
+ 121:Core/Src/freertos.c **** const osThreadAttr_t normal_sig_attributes = {
+ 122:Core/Src/freertos.c ****     .name = "normal_sig",
+ 123:Core/Src/freertos.c ****     .stack_size = 128 * 4,
+ 124:Core/Src/freertos.c ****     .priority = (osPriority_t)osPriorityLow,
+ 125:Core/Src/freertos.c **** };
+ 126:Core/Src/freertos.c **** /* Definitions for DATA_READY */
+ 127:Core/Src/freertos.c **** osSemaphoreId_t DATA_READYHandle;
+ 128:Core/Src/freertos.c **** const osSemaphoreAttr_t DATA_READY_attributes = {
+ 129:Core/Src/freertos.c ****     .name = "DATA_READY"};
+ 130:Core/Src/freertos.c **** /* Definitions for event */
+ 131:Core/Src/freertos.c **** osEventFlagsId_t eventHandle;
+ 132:Core/Src/freertos.c **** const osEventFlagsAttr_t event_attributes = {
+ 133:Core/Src/freertos.c ****     .name = "event"};
+ 134:Core/Src/freertos.c **** 
+ 135:Core/Src/freertos.c **** /* Private function prototypes -----------------------------------------------*/
+ 136:Core/Src/freertos.c **** /* USER CODE BEGIN FunctionPrototypes */
+ 137:Core/Src/freertos.c **** 
+ 138:Core/Src/freertos.c **** /* USER CODE END FunctionPrototypes */
+ 139:Core/Src/freertos.c **** 
+ 140:Core/Src/freertos.c **** _Noreturn void StartDefaultTask(void *argument);
+ 141:Core/Src/freertos.c **** 
+ 142:Core/Src/freertos.c **** _Noreturn void data_read_func(void *argument);
+ 143:Core/Src/freertos.c **** 
+ 144:Core/Src/freertos.c **** _Noreturn void reg_read_func(void *argument);
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 4
+
+
+ 145:Core/Src/freertos.c **** 
+ 146:Core/Src/freertos.c **** _Noreturn void data_send_func(void *argument);
+ 147:Core/Src/freertos.c **** 
+ 148:Core/Src/freertos.c **** _Noreturn void self_test_func(void *argument);
+ 149:Core/Src/freertos.c **** 
+ 150:Core/Src/freertos.c **** _Noreturn void normal_sig_func(void *argument);
+ 151:Core/Src/freertos.c **** 
+ 152:Core/Src/freertos.c **** extern void MX_USB_DEVICE_Init(void);
+ 153:Core/Src/freertos.c **** 
+ 154:Core/Src/freertos.c **** void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
+ 155:Core/Src/freertos.c **** 
+ 156:Core/Src/freertos.c **** /**
+ 157:Core/Src/freertos.c ****  * @brief  FreeRTOS initialization
+ 158:Core/Src/freertos.c ****  * @param  None
+ 159:Core/Src/freertos.c ****  * @retval None
+ 160:Core/Src/freertos.c ****  */
+ 161:Core/Src/freertos.c **** void MX_FREERTOS_Init(void)
+ 162:Core/Src/freertos.c **** {
+ 163:Core/Src/freertos.c ****     /* USER CODE BEGIN Init */
+ 164:Core/Src/freertos.c **** 
+ 165:Core/Src/freertos.c ****     /* USER CODE END Init */
+ 166:Core/Src/freertos.c **** 
+ 167:Core/Src/freertos.c ****     /* USER CODE BEGIN RTOS_MUTEX */
+ 168:Core/Src/freertos.c ****     /* add mutexes, ... */
+ 169:Core/Src/freertos.c ****     /* USER CODE END RTOS_MUTEX */
+ 170:Core/Src/freertos.c **** 
+ 171:Core/Src/freertos.c ****     /* Create the semaphores(s) */
+ 172:Core/Src/freertos.c ****     /* creation of DATA_READY */
+ 173:Core/Src/freertos.c ****     DATA_READYHandle = osSemaphoreNew(1, 1, &DATA_READY_attributes);
+ 174:Core/Src/freertos.c **** 
+ 175:Core/Src/freertos.c ****     /* USER CODE BEGIN RTOS_SEMAPHORES */
+ 176:Core/Src/freertos.c ****     /* add semaphores, ... */
+ 177:Core/Src/freertos.c ****     /* USER CODE END RTOS_SEMAPHORES */
+ 178:Core/Src/freertos.c **** 
+ 179:Core/Src/freertos.c ****     /* USER CODE BEGIN RTOS_TIMERS */
+ 180:Core/Src/freertos.c ****     /* start timers, add new ones, ... */
+ 181:Core/Src/freertos.c ****     /* USER CODE END RTOS_TIMERS */
+ 182:Core/Src/freertos.c **** 
+ 183:Core/Src/freertos.c ****     /* USER CODE BEGIN RTOS_QUEUES */
+ 184:Core/Src/freertos.c ****     /* add queues, ... */
+ 185:Core/Src/freertos.c ****     /* USER CODE END RTOS_QUEUES */
+ 186:Core/Src/freertos.c **** 
+ 187:Core/Src/freertos.c ****     /* Create the thread(s) */
+ 188:Core/Src/freertos.c ****     /* creation of defaultTask */
+ 189:Core/Src/freertos.c ****     defaultTaskHandle = osThreadNew(StartDefaultTask, NULL, &defaultTask_attributes);
+ 190:Core/Src/freertos.c **** 
+ 191:Core/Src/freertos.c ****     /* creation of data_read */
+ 192:Core/Src/freertos.c ****     data_readHandle = osThreadNew(data_read_func, NULL, &data_read_attributes);
+ 193:Core/Src/freertos.c **** 
+ 194:Core/Src/freertos.c ****     /* creation of all_reg_read */
+ 195:Core/Src/freertos.c ****     all_reg_readHandle = osThreadNew(reg_read_func, NULL, &all_reg_read_attributes);
+ 196:Core/Src/freertos.c **** 
+ 197:Core/Src/freertos.c ****     /* creation of data_send */
+ 198:Core/Src/freertos.c ****     data_sendHandle = osThreadNew(data_send_func, NULL, &data_send_attributes);
+ 199:Core/Src/freertos.c **** 
+ 200:Core/Src/freertos.c ****     /* creation of self_test */
+ 201:Core/Src/freertos.c ****     self_testHandle = osThreadNew(self_test_func, NULL, &self_test_attributes);
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 5
+
+
+ 202:Core/Src/freertos.c **** 
+ 203:Core/Src/freertos.c ****     /* creation of normal_sig */
+ 204:Core/Src/freertos.c ****     normal_sigHandle = osThreadNew(normal_sig_func, NULL, &normal_sig_attributes);
+ 205:Core/Src/freertos.c **** 
+ 206:Core/Src/freertos.c ****     /* USER CODE BEGIN RTOS_THREADS */
+ 207:Core/Src/freertos.c ****     /* add threads, ... */
+ 208:Core/Src/freertos.c ****     /* USER CODE END RTOS_THREADS */
+ 209:Core/Src/freertos.c **** 
+ 210:Core/Src/freertos.c ****     /* Create the event(s) */
+ 211:Core/Src/freertos.c ****     /* creation of event */
+ 212:Core/Src/freertos.c ****     eventHandle = osEventFlagsNew(&event_attributes);
+ 213:Core/Src/freertos.c **** 
+ 214:Core/Src/freertos.c ****     /* USER CODE BEGIN RTOS_EVENTS */
+ 215:Core/Src/freertos.c ****     /* add events, ... */
+ 216:Core/Src/freertos.c ****     /* USER CODE END RTOS_EVENTS */
+ 217:Core/Src/freertos.c **** }
+ 218:Core/Src/freertos.c **** 
+ 219:Core/Src/freertos.c **** /* USER CODE BEGIN Header_StartDefaultTask */
+ 220:Core/Src/freertos.c **** /**
+ 221:Core/Src/freertos.c ****  * @brief  Function implementing the defaultTask thread.
+ 222:Core/Src/freertos.c ****  * @param  argument: Not used
+ 223:Core/Src/freertos.c ****  * @retval None
+ 224:Core/Src/freertos.c ****  */
+ 225:Core/Src/freertos.c **** /* USER CODE END Header_StartDefaultTask */
+ 226:Core/Src/freertos.c **** _Noreturn void StartDefaultTask(void *argument)
+ 227:Core/Src/freertos.c **** {
+  29              		.loc 1 227 1 view -0
+  30              		.cfi_startproc
+  31              		@ Volatile: function does not return.
+  32              		@ args = 0, pretend = 0, frame = 0
+  33              		@ frame_needed = 0, uses_anonymous_args = 0
+  34              		.loc 1 227 1 is_stmt 0 view .LVU1
+  35 0000 08B5     		push	{r3, lr}
+  36              		.cfi_def_cfa_offset 8
+  37              		.cfi_offset 3, -8
+  38              		.cfi_offset 14, -4
+ 228:Core/Src/freertos.c ****     /* init code for USB_DEVICE */
+ 229:Core/Src/freertos.c ****     MX_USB_DEVICE_Init();
+  39              		.loc 1 229 5 is_stmt 1 view .LVU2
+  40 0002 FFF7FEFF 		bl	MX_USB_DEVICE_Init
+  41              	.LVL1:
+  42              	.L2:
+ 230:Core/Src/freertos.c ****     /* USER CODE BEGIN StartDefaultTask */
+ 231:Core/Src/freertos.c ****     /* Infinite loop */
+ 232:Core/Src/freertos.c ****     for (;;)
+  43              		.loc 1 232 5 discriminator 1 view .LVU3
+ 233:Core/Src/freertos.c ****     {
+ 234:Core/Src/freertos.c ****         osDelay(2000);
+  44              		.loc 1 234 9 discriminator 1 view .LVU4
+  45 0006 4FF4FA60 		mov	r0, #2000
+  46 000a FFF7FEFF 		bl	osDelay
+  47              	.LVL2:
+ 232:Core/Src/freertos.c ****     {
+  48              		.loc 1 232 11 discriminator 1 view .LVU5
+  49 000e FAE7     		b	.L2
+  50              		.cfi_endproc
+  51              	.LFE153:
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 6
+
+
+  53              		.section	.text.data_read_func,"ax",%progbits
+  54              		.align	1
+  55              		.global	data_read_func
+  56              		.syntax unified
+  57              		.thumb
+  58              		.thumb_func
+  60              	data_read_func:
+  61              	.LFB154:
+ 235:Core/Src/freertos.c ****     }
+ 236:Core/Src/freertos.c ****     /* USER CODE END StartDefaultTask */
+ 237:Core/Src/freertos.c **** }
+ 238:Core/Src/freertos.c **** 
+ 239:Core/Src/freertos.c **** /* USER CODE BEGIN Header_data_read_func */
+ 240:Core/Src/freertos.c **** /**
+ 241:Core/Src/freertos.c ****  * @brief Function implementing the data_read thread.
+ 242:Core/Src/freertos.c ****  * @param argument: Not used
+ 243:Core/Src/freertos.c ****  * @retval None
+ 244:Core/Src/freertos.c ****  */
+ 245:Core/Src/freertos.c **** /* USER CODE END Header_data_read_func */
+ 246:Core/Src/freertos.c **** _Noreturn void data_read_func(void *argument)
+ 247:Core/Src/freertos.c **** {
+  62              		.loc 1 247 1 view -0
+  63              		.cfi_startproc
+  64              		@ Volatile: function does not return.
+  65              		@ args = 0, pretend = 0, frame = 0
+  66              		@ frame_needed = 0, uses_anonymous_args = 0
+  67              	.LVL3:
+  68              		.loc 1 247 1 is_stmt 0 view .LVU7
+  69 0000 80B5     		push	{r7, lr}
+  70              		.cfi_def_cfa_offset 8
+  71              		.cfi_offset 7, -8
+  72              		.cfi_offset 14, -4
+  73 0002 82B0     		sub	sp, sp, #8
+  74              		.cfi_def_cfa_offset 16
+  75 0004 ACE0     		b	.L5
+  76              	.LVL4:
+  77              	.L6:
+ 248:Core/Src/freertos.c ****     /* USER CODE BEGIN data_read_func */
+ 249:Core/Src/freertos.c ****     /* Infinite loop */
+ 250:Core/Src/freertos.c ****     for (;;)
+ 251:Core/Src/freertos.c ****     {
+ 252:Core/Src/freertos.c ****         osEventFlagsWait(eventHandle, ITR_EVENT | CMD_EVENT, osFlagsNoClear | osFlagsWaitAll, osWai
+ 253:Core/Src/freertos.c ****         osEventFlagsClear(eventHandle, ITR_EVENT);
+ 254:Core/Src/freertos.c **** 
+ 255:Core/Src/freertos.c ****         if (buffer_select_flag == 0)
+ 256:Core/Src/freertos.c ****         {
+ 257:Core/Src/freertos.c ****             CS_LOW(1);
+ 258:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 135 * itr_num, 3, 100);
+ 259:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 135 * itr_num, 24, 100);
+ 260:Core/Src/freertos.c ****             CS_HIGH(1);
+ 261:Core/Src/freertos.c **** 
+ 262:Core/Src/freertos.c ****             CS_LOW(2);
+ 263:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 3 + 135 * itr_num, 3, 100);
+ 264:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 24 + 135 * itr_num, 24, 100);
+ 265:Core/Src/freertos.c ****             CS_HIGH(2);
+ 266:Core/Src/freertos.c **** 
+ 267:Core/Src/freertos.c ****             CS_LOW(3);
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 7
+
+
+ 268:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 6 + 135 * itr_num, 3, 100);
+ 269:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 48 + 135 * itr_num, 24, 100);
+ 270:Core/Src/freertos.c ****             CS_HIGH(3);
+ 271:Core/Src/freertos.c **** 
+ 272:Core/Src/freertos.c ****             CS_LOW(4);
+ 273:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 9 + 135 * itr_num, 3, 100);
+ 274:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 72 + 135 * itr_num, 24, 100);
+ 275:Core/Src/freertos.c ****             CS_HIGH(4);
+ 276:Core/Src/freertos.c **** 
+ 277:Core/Src/freertos.c ****             CS_LOW(5);
+ 278:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 12 + 135 * itr_num, 3, 100);
+ 279:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 96 + 135 * itr_num, 24, 100);
+ 280:Core/Src/freertos.c ****             CS_HIGH(5);
+ 281:Core/Src/freertos.c **** 
+ 282:Core/Src/freertos.c ****             itr_num++;
+ 283:Core/Src/freertos.c **** 
+ 284:Core/Src/freertos.c ****             if (itr_num == itr_num_max)
+ 285:Core/Src/freertos.c ****             {
+ 286:Core/Src/freertos.c **** #if _CRC_
+ 287:Core/Src/freertos.c ****                 data_save_a[3375] = calcCRC(data_save_a, 3375);
+ 288:Core/Src/freertos.c **** #endif
+ 289:Core/Src/freertos.c ****                 itr_num = 0;
+ 290:Core/Src/freertos.c ****                 buffer_select_flag = 1;
+ 291:Core/Src/freertos.c ****                 osEventFlagsSet(eventHandle, READY_EVENT);
+ 292:Core/Src/freertos.c ****             }
+ 293:Core/Src/freertos.c ****         }
+ 294:Core/Src/freertos.c ****         else
+ 295:Core/Src/freertos.c ****         {
+ 296:Core/Src/freertos.c ****             CS_LOW(1);
+  78              		.loc 1 296 13 is_stmt 1 view .LVU8
+  79 0006 0120     		movs	r0, #1
+  80 0008 FFF7FEFF 		bl	CS_LOW
+  81              	.LVL5:
+ 297:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_b + 135 * itr_num, 3, 100);
+  82              		.loc 1 297 13 view .LVU9
+  83              		.loc 1 297 70 is_stmt 0 view .LVU10
+  84 000c C94C     		ldr	r4, .L10
+  85 000e 2268     		ldr	r2, [r4]
+  86 0010 02EBC202 		add	r2, r2, r2, lsl #3
+  87 0014 C2EB0212 		rsb	r2, r2, r2, lsl #4
+  88              		.loc 1 297 13 view .LVU11
+  89 0018 C74E     		ldr	r6, .L10+4
+  90 001a DFF83C93 		ldr	r9, .L10+36
+  91 001e C74D     		ldr	r5, .L10+8
+  92 0020 6427     		movs	r7, #100
+  93 0022 0097     		str	r7, [sp]
+  94 0024 0323     		movs	r3, #3
+  95 0026 3244     		add	r2, r2, r6
+  96 0028 4946     		mov	r1, r9
+  97 002a 2846     		mov	r0, r5
+  98 002c FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+  99              	.LVL6:
+ 298:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_b + 15 + 135 * itr_num, 24, 100);
+ 100              		.loc 1 298 13 is_stmt 1 view .LVU12
+ 101              		.loc 1 298 75 is_stmt 0 view .LVU13
+ 102 0030 2268     		ldr	r2, [r4]
+ 103 0032 02EBC202 		add	r2, r2, r2, lsl #3
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 8
+
+
+ 104 0036 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 105              		.loc 1 298 69 view .LVU14
+ 106 003a 0F32     		adds	r2, r2, #15
+ 107              		.loc 1 298 13 view .LVU15
+ 108 003c DFF81C83 		ldr	r8, .L10+40
+ 109 0040 0097     		str	r7, [sp]
+ 110 0042 1823     		movs	r3, #24
+ 111 0044 3244     		add	r2, r2, r6
+ 112 0046 4146     		mov	r1, r8
+ 113 0048 2846     		mov	r0, r5
+ 114 004a FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 115              	.LVL7:
+ 299:Core/Src/freertos.c ****             CS_HIGH(1);
+ 116              		.loc 1 299 13 is_stmt 1 view .LVU16
+ 117 004e 0120     		movs	r0, #1
+ 118 0050 FFF7FEFF 		bl	CS_HIGH
+ 119              	.LVL8:
+ 300:Core/Src/freertos.c **** 
+ 301:Core/Src/freertos.c ****             CS_LOW(2);
+ 120              		.loc 1 301 13 view .LVU17
+ 121 0054 0220     		movs	r0, #2
+ 122 0056 FFF7FEFF 		bl	CS_LOW
+ 123              	.LVL9:
+ 302:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_b + 3 + 135 * itr_num, 3, 100);
+ 124              		.loc 1 302 13 view .LVU18
+ 125              		.loc 1 302 74 is_stmt 0 view .LVU19
+ 126 005a 2268     		ldr	r2, [r4]
+ 127 005c 02EBC202 		add	r2, r2, r2, lsl #3
+ 128 0060 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 129              		.loc 1 302 68 view .LVU20
+ 130 0064 0332     		adds	r2, r2, #3
+ 131              		.loc 1 302 13 view .LVU21
+ 132 0066 0097     		str	r7, [sp]
+ 133 0068 0323     		movs	r3, #3
+ 134 006a 3244     		add	r2, r2, r6
+ 135 006c 4946     		mov	r1, r9
+ 136 006e 2846     		mov	r0, r5
+ 137 0070 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 138              	.LVL10:
+ 303:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_b + 15 + 24 + 135 * itr_num, 24, 100);
+ 139              		.loc 1 303 13 is_stmt 1 view .LVU22
+ 140              		.loc 1 303 80 is_stmt 0 view .LVU23
+ 141 0074 2268     		ldr	r2, [r4]
+ 142 0076 02EBC202 		add	r2, r2, r2, lsl #3
+ 143 007a C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 144              		.loc 1 303 74 view .LVU24
+ 145 007e 2732     		adds	r2, r2, #39
+ 146              		.loc 1 303 13 view .LVU25
+ 147 0080 0097     		str	r7, [sp]
+ 148 0082 1823     		movs	r3, #24
+ 149 0084 3244     		add	r2, r2, r6
+ 150 0086 4146     		mov	r1, r8
+ 151 0088 2846     		mov	r0, r5
+ 152 008a FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 153              	.LVL11:
+ 304:Core/Src/freertos.c ****             CS_HIGH(2);
+ 154              		.loc 1 304 13 is_stmt 1 view .LVU26
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 9
+
+
+ 155 008e 0220     		movs	r0, #2
+ 156 0090 FFF7FEFF 		bl	CS_HIGH
+ 157              	.LVL12:
+ 305:Core/Src/freertos.c **** 
+ 306:Core/Src/freertos.c ****             CS_LOW(3);
+ 158              		.loc 1 306 13 view .LVU27
+ 159 0094 0320     		movs	r0, #3
+ 160 0096 FFF7FEFF 		bl	CS_LOW
+ 161              	.LVL13:
+ 307:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_b + 6 + 135 * itr_num, 3, 100);
+ 162              		.loc 1 307 13 view .LVU28
+ 163              		.loc 1 307 74 is_stmt 0 view .LVU29
+ 164 009a 2268     		ldr	r2, [r4]
+ 165 009c 02EBC202 		add	r2, r2, r2, lsl #3
+ 166 00a0 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 167              		.loc 1 307 68 view .LVU30
+ 168 00a4 0632     		adds	r2, r2, #6
+ 169              		.loc 1 307 13 view .LVU31
+ 170 00a6 0097     		str	r7, [sp]
+ 171 00a8 0323     		movs	r3, #3
+ 172 00aa 3244     		add	r2, r2, r6
+ 173 00ac 4946     		mov	r1, r9
+ 174 00ae 2846     		mov	r0, r5
+ 175 00b0 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 176              	.LVL14:
+ 308:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_b + 15 + 48 + 135 * itr_num, 24, 100);
+ 177              		.loc 1 308 13 is_stmt 1 view .LVU32
+ 178              		.loc 1 308 80 is_stmt 0 view .LVU33
+ 179 00b4 2268     		ldr	r2, [r4]
+ 180 00b6 02EBC202 		add	r2, r2, r2, lsl #3
+ 181 00ba C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 182              		.loc 1 308 74 view .LVU34
+ 183 00be 3F32     		adds	r2, r2, #63
+ 184              		.loc 1 308 13 view .LVU35
+ 185 00c0 0097     		str	r7, [sp]
+ 186 00c2 1823     		movs	r3, #24
+ 187 00c4 3244     		add	r2, r2, r6
+ 188 00c6 4146     		mov	r1, r8
+ 189 00c8 2846     		mov	r0, r5
+ 190 00ca FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 191              	.LVL15:
+ 309:Core/Src/freertos.c ****             CS_HIGH(3);
+ 192              		.loc 1 309 13 is_stmt 1 view .LVU36
+ 193 00ce 0320     		movs	r0, #3
+ 194 00d0 FFF7FEFF 		bl	CS_HIGH
+ 195              	.LVL16:
+ 310:Core/Src/freertos.c **** 
+ 311:Core/Src/freertos.c ****             CS_LOW(4);
+ 196              		.loc 1 311 13 view .LVU37
+ 197 00d4 0420     		movs	r0, #4
+ 198 00d6 FFF7FEFF 		bl	CS_LOW
+ 199              	.LVL17:
+ 312:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_b + 9 + 135 * itr_num, 3, 100);
+ 200              		.loc 1 312 13 view .LVU38
+ 201              		.loc 1 312 74 is_stmt 0 view .LVU39
+ 202 00da 2268     		ldr	r2, [r4]
+ 203 00dc 02EBC202 		add	r2, r2, r2, lsl #3
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 10
+
+
+ 204 00e0 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 205              		.loc 1 312 68 view .LVU40
+ 206 00e4 0932     		adds	r2, r2, #9
+ 207              		.loc 1 312 13 view .LVU41
+ 208 00e6 0097     		str	r7, [sp]
+ 209 00e8 0323     		movs	r3, #3
+ 210 00ea 3244     		add	r2, r2, r6
+ 211 00ec 4946     		mov	r1, r9
+ 212 00ee 2846     		mov	r0, r5
+ 213 00f0 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 214              	.LVL18:
+ 313:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_b + 15 + 72 + 135 * itr_num, 24, 100);
+ 215              		.loc 1 313 13 is_stmt 1 view .LVU42
+ 216              		.loc 1 313 80 is_stmt 0 view .LVU43
+ 217 00f4 2268     		ldr	r2, [r4]
+ 218 00f6 02EBC202 		add	r2, r2, r2, lsl #3
+ 219 00fa C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 220              		.loc 1 313 74 view .LVU44
+ 221 00fe 5732     		adds	r2, r2, #87
+ 222              		.loc 1 313 13 view .LVU45
+ 223 0100 0097     		str	r7, [sp]
+ 224 0102 1823     		movs	r3, #24
+ 225 0104 3244     		add	r2, r2, r6
+ 226 0106 4146     		mov	r1, r8
+ 227 0108 2846     		mov	r0, r5
+ 228 010a FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 229              	.LVL19:
+ 314:Core/Src/freertos.c ****             CS_HIGH(4);
+ 230              		.loc 1 314 13 is_stmt 1 view .LVU46
+ 231 010e 0420     		movs	r0, #4
+ 232 0110 FFF7FEFF 		bl	CS_HIGH
+ 233              	.LVL20:
+ 315:Core/Src/freertos.c **** 
+ 316:Core/Src/freertos.c ****             CS_LOW(5);
+ 234              		.loc 1 316 13 view .LVU47
+ 235 0114 0520     		movs	r0, #5
+ 236 0116 FFF7FEFF 		bl	CS_LOW
+ 237              	.LVL21:
+ 317:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_b + 12 + 135 * itr_num, 3, 100);
+ 238              		.loc 1 317 13 view .LVU48
+ 239              		.loc 1 317 75 is_stmt 0 view .LVU49
+ 240 011a 2268     		ldr	r2, [r4]
+ 241 011c 02EBC202 		add	r2, r2, r2, lsl #3
+ 242 0120 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 243              		.loc 1 317 69 view .LVU50
+ 244 0124 0C32     		adds	r2, r2, #12
+ 245              		.loc 1 317 13 view .LVU51
+ 246 0126 0097     		str	r7, [sp]
+ 247 0128 0323     		movs	r3, #3
+ 248 012a 3244     		add	r2, r2, r6
+ 249 012c 4946     		mov	r1, r9
+ 250 012e 2846     		mov	r0, r5
+ 251 0130 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 252              	.LVL22:
+ 318:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_b + 15 + 96 + 135 * itr_num, 24, 100);
+ 253              		.loc 1 318 13 is_stmt 1 view .LVU52
+ 254              		.loc 1 318 80 is_stmt 0 view .LVU53
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 11
+
+
+ 255 0134 2268     		ldr	r2, [r4]
+ 256 0136 02EBC202 		add	r2, r2, r2, lsl #3
+ 257 013a C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 258              		.loc 1 318 74 view .LVU54
+ 259 013e 6F32     		adds	r2, r2, #111
+ 260              		.loc 1 318 13 view .LVU55
+ 261 0140 0097     		str	r7, [sp]
+ 262 0142 1823     		movs	r3, #24
+ 263 0144 3244     		add	r2, r2, r6
+ 264 0146 4146     		mov	r1, r8
+ 265 0148 2846     		mov	r0, r5
+ 266 014a FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 267              	.LVL23:
+ 319:Core/Src/freertos.c ****             CS_HIGH(5);
+ 268              		.loc 1 319 13 is_stmt 1 view .LVU56
+ 269 014e 0520     		movs	r0, #5
+ 270 0150 FFF7FEFF 		bl	CS_HIGH
+ 271              	.LVL24:
+ 320:Core/Src/freertos.c **** 
+ 321:Core/Src/freertos.c ****             itr_num++;
+ 272              		.loc 1 321 13 view .LVU57
+ 273              		.loc 1 321 20 is_stmt 0 view .LVU58
+ 274 0154 2368     		ldr	r3, [r4]
+ 275 0156 0133     		adds	r3, r3, #1
+ 276 0158 2360     		str	r3, [r4]
+ 322:Core/Src/freertos.c **** 
+ 323:Core/Src/freertos.c ****             if (itr_num == itr_num_max)
+ 277              		.loc 1 323 13 is_stmt 1 view .LVU59
+ 278              		.loc 1 323 16 is_stmt 0 view .LVU60
+ 279 015a 192B     		cmp	r3, #25
+ 280 015c 00F0D680 		beq	.L9
+ 281              	.L5:
+ 250:Core/Src/freertos.c ****     {
+ 282              		.loc 1 250 5 is_stmt 1 view .LVU61
+ 252:Core/Src/freertos.c ****         osEventFlagsClear(eventHandle, ITR_EVENT);
+ 283              		.loc 1 252 9 view .LVU62
+ 284 0160 774B     		ldr	r3, .L10+12
+ 285 0162 1D78     		ldrb	r5, [r3]	@ zero_extendqisi2
+ 286 0164 774B     		ldr	r3, .L10+16
+ 287 0166 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 288 0168 774C     		ldr	r4, .L10+20
+ 289 016a 4FF0FF33 		mov	r3, #-1
+ 290 016e 0322     		movs	r2, #3
+ 291 0170 2943     		orrs	r1, r1, r5
+ 292 0172 2068     		ldr	r0, [r4]
+ 293 0174 FFF7FEFF 		bl	osEventFlagsWait
+ 294              	.LVL25:
+ 253:Core/Src/freertos.c **** 
+ 295              		.loc 1 253 9 view .LVU63
+ 296 0178 2946     		mov	r1, r5
+ 297 017a 2068     		ldr	r0, [r4]
+ 298 017c FFF7FEFF 		bl	osEventFlagsClear
+ 299              	.LVL26:
+ 255:Core/Src/freertos.c ****         {
+ 300              		.loc 1 255 9 view .LVU64
+ 255:Core/Src/freertos.c ****         {
+ 301              		.loc 1 255 32 is_stmt 0 view .LVU65
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 12
+
+
+ 302 0180 724B     		ldr	r3, .L10+24
+ 303 0182 1B68     		ldr	r3, [r3]
+ 255:Core/Src/freertos.c ****         {
+ 304              		.loc 1 255 12 view .LVU66
+ 305 0184 002B     		cmp	r3, #0
+ 306 0186 7FF43EAF 		bne	.L6
+ 257:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 135 * itr_num, 3, 100);
+ 307              		.loc 1 257 13 is_stmt 1 view .LVU67
+ 308 018a 0120     		movs	r0, #1
+ 309 018c FFF7FEFF 		bl	CS_LOW
+ 310              	.LVL27:
+ 258:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 135 * itr_num, 24, 100);
+ 311              		.loc 1 258 13 view .LVU68
+ 258:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 135 * itr_num, 24, 100);
+ 312              		.loc 1 258 70 is_stmt 0 view .LVU69
+ 313 0190 684C     		ldr	r4, .L10
+ 314 0192 2268     		ldr	r2, [r4]
+ 315 0194 02EBC202 		add	r2, r2, r2, lsl #3
+ 316 0198 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 258:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 135 * itr_num, 24, 100);
+ 317              		.loc 1 258 13 view .LVU70
+ 318 019c 6C4E     		ldr	r6, .L10+28
+ 319 019e DFF8B891 		ldr	r9, .L10+36
+ 320 01a2 664D     		ldr	r5, .L10+8
+ 321 01a4 6427     		movs	r7, #100
+ 322 01a6 0097     		str	r7, [sp]
+ 323 01a8 0323     		movs	r3, #3
+ 324 01aa 3244     		add	r2, r2, r6
+ 325 01ac 4946     		mov	r1, r9
+ 326 01ae 2846     		mov	r0, r5
+ 327 01b0 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 328              	.LVL28:
+ 259:Core/Src/freertos.c ****             CS_HIGH(1);
+ 329              		.loc 1 259 13 is_stmt 1 view .LVU71
+ 259:Core/Src/freertos.c ****             CS_HIGH(1);
+ 330              		.loc 1 259 75 is_stmt 0 view .LVU72
+ 331 01b4 2268     		ldr	r2, [r4]
+ 332 01b6 02EBC202 		add	r2, r2, r2, lsl #3
+ 333 01ba C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 259:Core/Src/freertos.c ****             CS_HIGH(1);
+ 334              		.loc 1 259 69 view .LVU73
+ 335 01be 0F32     		adds	r2, r2, #15
+ 259:Core/Src/freertos.c ****             CS_HIGH(1);
+ 336              		.loc 1 259 13 view .LVU74
+ 337 01c0 DFF89881 		ldr	r8, .L10+40
+ 338 01c4 0097     		str	r7, [sp]
+ 339 01c6 1823     		movs	r3, #24
+ 340 01c8 3244     		add	r2, r2, r6
+ 341 01ca 4146     		mov	r1, r8
+ 342 01cc 2846     		mov	r0, r5
+ 343 01ce FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 344              	.LVL29:
+ 260:Core/Src/freertos.c **** 
+ 345              		.loc 1 260 13 is_stmt 1 view .LVU75
+ 346 01d2 0120     		movs	r0, #1
+ 347 01d4 FFF7FEFF 		bl	CS_HIGH
+ 348              	.LVL30:
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 13
+
+
+ 262:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 3 + 135 * itr_num, 3, 100);
+ 349              		.loc 1 262 13 view .LVU76
+ 350 01d8 0220     		movs	r0, #2
+ 351 01da FFF7FEFF 		bl	CS_LOW
+ 352              	.LVL31:
+ 263:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 24 + 135 * itr_num, 24, 100);
+ 353              		.loc 1 263 13 view .LVU77
+ 263:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 24 + 135 * itr_num, 24, 100);
+ 354              		.loc 1 263 74 is_stmt 0 view .LVU78
+ 355 01de 2268     		ldr	r2, [r4]
+ 356 01e0 02EBC202 		add	r2, r2, r2, lsl #3
+ 357 01e4 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 263:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 24 + 135 * itr_num, 24, 100);
+ 358              		.loc 1 263 68 view .LVU79
+ 359 01e8 0332     		adds	r2, r2, #3
+ 263:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 24 + 135 * itr_num, 24, 100);
+ 360              		.loc 1 263 13 view .LVU80
+ 361 01ea 0097     		str	r7, [sp]
+ 362 01ec 0323     		movs	r3, #3
+ 363 01ee 3244     		add	r2, r2, r6
+ 364 01f0 4946     		mov	r1, r9
+ 365 01f2 2846     		mov	r0, r5
+ 366 01f4 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 367              	.LVL32:
+ 264:Core/Src/freertos.c ****             CS_HIGH(2);
+ 368              		.loc 1 264 13 is_stmt 1 view .LVU81
+ 264:Core/Src/freertos.c ****             CS_HIGH(2);
+ 369              		.loc 1 264 80 is_stmt 0 view .LVU82
+ 370 01f8 2268     		ldr	r2, [r4]
+ 371 01fa 02EBC202 		add	r2, r2, r2, lsl #3
+ 372 01fe C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 264:Core/Src/freertos.c ****             CS_HIGH(2);
+ 373              		.loc 1 264 74 view .LVU83
+ 374 0202 2732     		adds	r2, r2, #39
+ 264:Core/Src/freertos.c ****             CS_HIGH(2);
+ 375              		.loc 1 264 13 view .LVU84
+ 376 0204 0097     		str	r7, [sp]
+ 377 0206 1823     		movs	r3, #24
+ 378 0208 3244     		add	r2, r2, r6
+ 379 020a 4146     		mov	r1, r8
+ 380 020c 2846     		mov	r0, r5
+ 381 020e FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 382              	.LVL33:
+ 265:Core/Src/freertos.c **** 
+ 383              		.loc 1 265 13 is_stmt 1 view .LVU85
+ 384 0212 0220     		movs	r0, #2
+ 385 0214 FFF7FEFF 		bl	CS_HIGH
+ 386              	.LVL34:
+ 267:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 6 + 135 * itr_num, 3, 100);
+ 387              		.loc 1 267 13 view .LVU86
+ 388 0218 0320     		movs	r0, #3
+ 389 021a FFF7FEFF 		bl	CS_LOW
+ 390              	.LVL35:
+ 268:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 48 + 135 * itr_num, 24, 100);
+ 391              		.loc 1 268 13 view .LVU87
+ 268:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 48 + 135 * itr_num, 24, 100);
+ 392              		.loc 1 268 74 is_stmt 0 view .LVU88
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 14
+
+
+ 393 021e 2268     		ldr	r2, [r4]
+ 394 0220 02EBC202 		add	r2, r2, r2, lsl #3
+ 395 0224 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 268:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 48 + 135 * itr_num, 24, 100);
+ 396              		.loc 1 268 68 view .LVU89
+ 397 0228 0632     		adds	r2, r2, #6
+ 268:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 48 + 135 * itr_num, 24, 100);
+ 398              		.loc 1 268 13 view .LVU90
+ 399 022a 0097     		str	r7, [sp]
+ 400 022c 0323     		movs	r3, #3
+ 401 022e 3244     		add	r2, r2, r6
+ 402 0230 4946     		mov	r1, r9
+ 403 0232 2846     		mov	r0, r5
+ 404 0234 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 405              	.LVL36:
+ 269:Core/Src/freertos.c ****             CS_HIGH(3);
+ 406              		.loc 1 269 13 is_stmt 1 view .LVU91
+ 269:Core/Src/freertos.c ****             CS_HIGH(3);
+ 407              		.loc 1 269 80 is_stmt 0 view .LVU92
+ 408 0238 2268     		ldr	r2, [r4]
+ 409 023a 02EBC202 		add	r2, r2, r2, lsl #3
+ 410 023e C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 269:Core/Src/freertos.c ****             CS_HIGH(3);
+ 411              		.loc 1 269 74 view .LVU93
+ 412 0242 3F32     		adds	r2, r2, #63
+ 269:Core/Src/freertos.c ****             CS_HIGH(3);
+ 413              		.loc 1 269 13 view .LVU94
+ 414 0244 0097     		str	r7, [sp]
+ 415 0246 1823     		movs	r3, #24
+ 416 0248 3244     		add	r2, r2, r6
+ 417 024a 4146     		mov	r1, r8
+ 418 024c 2846     		mov	r0, r5
+ 419 024e FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 420              	.LVL37:
+ 270:Core/Src/freertos.c **** 
+ 421              		.loc 1 270 13 is_stmt 1 view .LVU95
+ 422 0252 0320     		movs	r0, #3
+ 423 0254 FFF7FEFF 		bl	CS_HIGH
+ 424              	.LVL38:
+ 272:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 9 + 135 * itr_num, 3, 100);
+ 425              		.loc 1 272 13 view .LVU96
+ 426 0258 0420     		movs	r0, #4
+ 427 025a FFF7FEFF 		bl	CS_LOW
+ 428              	.LVL39:
+ 273:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 72 + 135 * itr_num, 24, 100);
+ 429              		.loc 1 273 13 view .LVU97
+ 273:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 72 + 135 * itr_num, 24, 100);
+ 430              		.loc 1 273 74 is_stmt 0 view .LVU98
+ 431 025e 2268     		ldr	r2, [r4]
+ 432 0260 02EBC202 		add	r2, r2, r2, lsl #3
+ 433 0264 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 273:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 72 + 135 * itr_num, 24, 100);
+ 434              		.loc 1 273 68 view .LVU99
+ 435 0268 0932     		adds	r2, r2, #9
+ 273:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 72 + 135 * itr_num, 24, 100);
+ 436              		.loc 1 273 13 view .LVU100
+ 437 026a 0097     		str	r7, [sp]
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 15
+
+
+ 438 026c 0323     		movs	r3, #3
+ 439 026e 3244     		add	r2, r2, r6
+ 440 0270 4946     		mov	r1, r9
+ 441 0272 2846     		mov	r0, r5
+ 442 0274 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 443              	.LVL40:
+ 274:Core/Src/freertos.c ****             CS_HIGH(4);
+ 444              		.loc 1 274 13 is_stmt 1 view .LVU101
+ 274:Core/Src/freertos.c ****             CS_HIGH(4);
+ 445              		.loc 1 274 80 is_stmt 0 view .LVU102
+ 446 0278 2268     		ldr	r2, [r4]
+ 447 027a 02EBC202 		add	r2, r2, r2, lsl #3
+ 448 027e C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 274:Core/Src/freertos.c ****             CS_HIGH(4);
+ 449              		.loc 1 274 74 view .LVU103
+ 450 0282 5732     		adds	r2, r2, #87
+ 274:Core/Src/freertos.c ****             CS_HIGH(4);
+ 451              		.loc 1 274 13 view .LVU104
+ 452 0284 0097     		str	r7, [sp]
+ 453 0286 1823     		movs	r3, #24
+ 454 0288 3244     		add	r2, r2, r6
+ 455 028a 4146     		mov	r1, r8
+ 456 028c 2846     		mov	r0, r5
+ 457 028e FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 458              	.LVL41:
+ 275:Core/Src/freertos.c **** 
+ 459              		.loc 1 275 13 is_stmt 1 view .LVU105
+ 460 0292 0420     		movs	r0, #4
+ 461 0294 FFF7FEFF 		bl	CS_HIGH
+ 462              	.LVL42:
+ 277:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send1, data_save_a + 12 + 135 * itr_num, 3, 100);
+ 463              		.loc 1 277 13 view .LVU106
+ 464 0298 0520     		movs	r0, #5
+ 465 029a FFF7FEFF 		bl	CS_LOW
+ 466              	.LVL43:
+ 278:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 96 + 135 * itr_num, 24, 100);
+ 467              		.loc 1 278 13 view .LVU107
+ 278:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 96 + 135 * itr_num, 24, 100);
+ 468              		.loc 1 278 75 is_stmt 0 view .LVU108
+ 469 029e 2268     		ldr	r2, [r4]
+ 470 02a0 02EBC202 		add	r2, r2, r2, lsl #3
+ 471 02a4 C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 278:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 96 + 135 * itr_num, 24, 100);
+ 472              		.loc 1 278 69 view .LVU109
+ 473 02a8 0C32     		adds	r2, r2, #12
+ 278:Core/Src/freertos.c ****             HAL_SPI_TransmitReceive(&hspi3, send2, data_save_a + 15 + 96 + 135 * itr_num, 24, 100);
+ 474              		.loc 1 278 13 view .LVU110
+ 475 02aa 0097     		str	r7, [sp]
+ 476 02ac 0323     		movs	r3, #3
+ 477 02ae 3244     		add	r2, r2, r6
+ 478 02b0 4946     		mov	r1, r9
+ 479 02b2 2846     		mov	r0, r5
+ 480 02b4 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 481              	.LVL44:
+ 279:Core/Src/freertos.c ****             CS_HIGH(5);
+ 482              		.loc 1 279 13 is_stmt 1 view .LVU111
+ 279:Core/Src/freertos.c ****             CS_HIGH(5);
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 16
+
+
+ 483              		.loc 1 279 80 is_stmt 0 view .LVU112
+ 484 02b8 2268     		ldr	r2, [r4]
+ 485 02ba 02EBC202 		add	r2, r2, r2, lsl #3
+ 486 02be C2EB0212 		rsb	r2, r2, r2, lsl #4
+ 279:Core/Src/freertos.c ****             CS_HIGH(5);
+ 487              		.loc 1 279 74 view .LVU113
+ 488 02c2 6F32     		adds	r2, r2, #111
+ 279:Core/Src/freertos.c ****             CS_HIGH(5);
+ 489              		.loc 1 279 13 view .LVU114
+ 490 02c4 0097     		str	r7, [sp]
+ 491 02c6 1823     		movs	r3, #24
+ 492 02c8 3244     		add	r2, r2, r6
+ 493 02ca 4146     		mov	r1, r8
+ 494 02cc 2846     		mov	r0, r5
+ 495 02ce FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 496              	.LVL45:
+ 280:Core/Src/freertos.c **** 
+ 497              		.loc 1 280 13 is_stmt 1 view .LVU115
+ 498 02d2 0520     		movs	r0, #5
+ 499 02d4 FFF7FEFF 		bl	CS_HIGH
+ 500              	.LVL46:
+ 282:Core/Src/freertos.c **** 
+ 501              		.loc 1 282 13 view .LVU116
+ 282:Core/Src/freertos.c **** 
+ 502              		.loc 1 282 20 is_stmt 0 view .LVU117
+ 503 02d8 2368     		ldr	r3, [r4]
+ 504 02da 0133     		adds	r3, r3, #1
+ 505 02dc 2360     		str	r3, [r4]
+ 284:Core/Src/freertos.c ****             {
+ 506              		.loc 1 284 13 is_stmt 1 view .LVU118
+ 284:Core/Src/freertos.c ****             {
+ 507              		.loc 1 284 16 is_stmt 0 view .LVU119
+ 508 02de 192B     		cmp	r3, #25
+ 509 02e0 7FF43EAF 		bne	.L5
+ 287:Core/Src/freertos.c **** #endif
+ 510              		.loc 1 287 17 is_stmt 1 view .LVU120
+ 287:Core/Src/freertos.c **** #endif
+ 511              		.loc 1 287 37 is_stmt 0 view .LVU121
+ 512 02e4 40F62F51 		movw	r1, #3375
+ 513 02e8 3046     		mov	r0, r6
+ 514 02ea FFF7FEFF 		bl	calcCRC
+ 515              	.LVL47:
+ 287:Core/Src/freertos.c **** #endif
+ 516              		.loc 1 287 35 view .LVU122
+ 517 02ee 86F82F0D 		strb	r0, [r6, #3375]
+ 289:Core/Src/freertos.c ****                 buffer_select_flag = 1;
+ 518              		.loc 1 289 17 is_stmt 1 view .LVU123
+ 289:Core/Src/freertos.c ****                 buffer_select_flag = 1;
+ 519              		.loc 1 289 25 is_stmt 0 view .LVU124
+ 520 02f2 104B     		ldr	r3, .L10
+ 521 02f4 0022     		movs	r2, #0
+ 522 02f6 1A60     		str	r2, [r3]
+ 290:Core/Src/freertos.c ****                 osEventFlagsSet(eventHandle, READY_EVENT);
+ 523              		.loc 1 290 17 is_stmt 1 view .LVU125
+ 290:Core/Src/freertos.c ****                 osEventFlagsSet(eventHandle, READY_EVENT);
+ 524              		.loc 1 290 36 is_stmt 0 view .LVU126
+ 525 02f8 144B     		ldr	r3, .L10+24
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 17
+
+
+ 526 02fa 0122     		movs	r2, #1
+ 527 02fc 1A60     		str	r2, [r3]
+ 291:Core/Src/freertos.c ****             }
+ 528              		.loc 1 291 17 is_stmt 1 view .LVU127
+ 529 02fe 154B     		ldr	r3, .L10+32
+ 530 0300 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 531 0302 114B     		ldr	r3, .L10+20
+ 532 0304 1868     		ldr	r0, [r3]
+ 533 0306 FFF7FEFF 		bl	osEventFlagsSet
+ 534              	.LVL48:
+ 535 030a 29E7     		b	.L5
+ 536              	.L9:
+ 324:Core/Src/freertos.c ****             {
+ 325:Core/Src/freertos.c **** #if _CRC_
+ 326:Core/Src/freertos.c ****                 data_save_b[3375] = calcCRC(data_save_b, 3375);
+ 537              		.loc 1 326 17 view .LVU128
+ 538              		.loc 1 326 37 is_stmt 0 view .LVU129
+ 539 030c 40F62F51 		movw	r1, #3375
+ 540 0310 3046     		mov	r0, r6
+ 541 0312 FFF7FEFF 		bl	calcCRC
+ 542              	.LVL49:
+ 543              		.loc 1 326 35 view .LVU130
+ 544 0316 86F82F0D 		strb	r0, [r6, #3375]
+ 327:Core/Src/freertos.c **** #endif
+ 328:Core/Src/freertos.c ****                 itr_num = 0;
+ 545              		.loc 1 328 17 is_stmt 1 view .LVU131
+ 546              		.loc 1 328 25 is_stmt 0 view .LVU132
+ 547 031a 0023     		movs	r3, #0
+ 548 031c 054A     		ldr	r2, .L10
+ 549 031e 1360     		str	r3, [r2]
+ 329:Core/Src/freertos.c ****                 buffer_select_flag = 0;
+ 550              		.loc 1 329 17 is_stmt 1 view .LVU133
+ 551              		.loc 1 329 36 is_stmt 0 view .LVU134
+ 552 0320 0A4A     		ldr	r2, .L10+24
+ 553 0322 1360     		str	r3, [r2]
+ 330:Core/Src/freertos.c ****                 osEventFlagsSet(eventHandle, READY_EVENT);
+ 554              		.loc 1 330 17 is_stmt 1 view .LVU135
+ 555 0324 0B4B     		ldr	r3, .L10+32
+ 556 0326 1978     		ldrb	r1, [r3]	@ zero_extendqisi2
+ 557 0328 074B     		ldr	r3, .L10+20
+ 558 032a 1868     		ldr	r0, [r3]
+ 559 032c FFF7FEFF 		bl	osEventFlagsSet
+ 560              	.LVL50:
+ 561 0330 16E7     		b	.L5
+ 562              	.L11:
+ 563 0332 00BF     		.align	2
+ 564              	.L10:
+ 565 0334 00000000 		.word	itr_num
+ 566 0338 00000000 		.word	.LANCHOR5
+ 567 033c 00000000 		.word	hspi3
+ 568 0340 00000000 		.word	ITR_EVENT
+ 569 0344 00000000 		.word	CMD_EVENT
+ 570 0348 00000000 		.word	.LANCHOR0
+ 571 034c 00000000 		.word	.LANCHOR1
+ 572 0350 00000000 		.word	.LANCHOR2
+ 573 0354 00000000 		.word	READY_EVENT
+ 574 0358 00000000 		.word	.LANCHOR3
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 18
+
+
+ 575 035c 00000000 		.word	.LANCHOR4
+ 576              		.cfi_endproc
+ 577              	.LFE154:
+ 579              		.section	.text.reg_read_func,"ax",%progbits
+ 580              		.align	1
+ 581              		.global	reg_read_func
+ 582              		.syntax unified
+ 583              		.thumb
+ 584              		.thumb_func
+ 586              	reg_read_func:
+ 587              	.LFB155:
+ 331:Core/Src/freertos.c ****             }
+ 332:Core/Src/freertos.c ****         }
+ 333:Core/Src/freertos.c ****     }
+ 334:Core/Src/freertos.c ****     /* USER CODE END data_read_func */
+ 335:Core/Src/freertos.c **** }
+ 336:Core/Src/freertos.c **** 
+ 337:Core/Src/freertos.c **** /* USER CODE BEGIN Header_reg_read_func */
+ 338:Core/Src/freertos.c **** /**
+ 339:Core/Src/freertos.c ****  * @brief Function implementing the all_reg_read thread.
+ 340:Core/Src/freertos.c ****  * @param argument: Not used
+ 341:Core/Src/freertos.c ****  * @retval None
+ 342:Core/Src/freertos.c ****  */
+ 343:Core/Src/freertos.c **** /* USER CODE END Header_reg_read_func */
+ 344:Core/Src/freertos.c **** _Noreturn void reg_read_func(void *argument)
+ 345:Core/Src/freertos.c **** {
+ 588              		.loc 1 345 1 view -0
+ 589              		.cfi_startproc
+ 590              		@ Volatile: function does not return.
+ 591              		@ args = 0, pretend = 0, frame = 0
+ 592              		@ frame_needed = 0, uses_anonymous_args = 0
+ 593              	.LVL51:
+ 594              		.loc 1 345 1 is_stmt 0 view .LVU137
+ 595 0000 08B5     		push	{r3, lr}
+ 596              		.cfi_def_cfa_offset 8
+ 597              		.cfi_offset 3, -8
+ 598              		.cfi_offset 14, -4
+ 599 0002 17E0     		b	.L17
+ 600              	.LVL52:
+ 601              	.L14:
+ 602              	.LBB2:
+ 346:Core/Src/freertos.c ****     /* USER CODE BEGIN reg_read_func */
+ 347:Core/Src/freertos.c **** 
+ 348:Core/Src/freertos.c ****     /* Infinite loop */
+ 349:Core/Src/freertos.c ****     for (;;)
+ 350:Core/Src/freertos.c ****     {
+ 351:Core/Src/freertos.c ****         osEventFlagsWait(eventHandle, REG_EVENT, osFlagsWaitAny, osWaitForever);
+ 352:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 353:Core/Src/freertos.c ****         {
+ 354:Core/Src/freertos.c ****             ads1299_send_cmd(ADS1299_SDATAC, i);
+ 603              		.loc 1 354 13 is_stmt 1 discriminator 3 view .LVU138
+ 604 0004 2146     		mov	r1, r4
+ 605 0006 1120     		movs	r0, #17
+ 606 0008 FFF7FEFF 		bl	ads1299_send_cmd
+ 607              	.LVL53:
+ 355:Core/Src/freertos.c ****             HAL_Delay(1);
+ 608              		.loc 1 355 13 discriminator 3 view .LVU139
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 19
+
+
+ 609 000c 0120     		movs	r0, #1
+ 610 000e FFF7FEFF 		bl	HAL_Delay
+ 611              	.LVL54:
+ 352:Core/Src/freertos.c ****         {
+ 612              		.loc 1 352 32 discriminator 3 view .LVU140
+ 352:Core/Src/freertos.c ****         {
+ 613              		.loc 1 352 33 is_stmt 0 discriminator 3 view .LVU141
+ 614 0012 0134     		adds	r4, r4, #1
+ 615              	.LVL55:
+ 616              	.L13:
+ 352:Core/Src/freertos.c ****         {
+ 617              		.loc 1 352 25 is_stmt 1 discriminator 1 view .LVU142
+ 352:Core/Src/freertos.c ****         {
+ 618              		.loc 1 352 9 is_stmt 0 discriminator 1 view .LVU143
+ 619 0014 052C     		cmp	r4, #5
+ 620 0016 F5DD     		ble	.L14
+ 621              	.LBE2:
+ 356:Core/Src/freertos.c ****         }
+ 357:Core/Src/freertos.c **** 
+ 358:Core/Src/freertos.c ****         all_ads1299_reg_read();
+ 622              		.loc 1 358 9 is_stmt 1 view .LVU144
+ 623 0018 FFF7FEFF 		bl	all_ads1299_reg_read
+ 624              	.LVL56:
+ 359:Core/Src/freertos.c **** 
+ 360:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 625              		.loc 1 360 9 view .LVU145
+ 626              	.LBB3:
+ 627              		.loc 1 360 14 view .LVU146
+ 628              		.loc 1 360 18 is_stmt 0 view .LVU147
+ 629 001c 0124     		movs	r4, #1
+ 630              	.LVL57:
+ 631              		.loc 1 360 9 view .LVU148
+ 632 001e 07E0     		b	.L15
+ 633              	.LVL58:
+ 634              	.L16:
+ 361:Core/Src/freertos.c ****         {
+ 362:Core/Src/freertos.c ****             ads1299_send_cmd(ADS1299_RDATAC, i);
+ 635              		.loc 1 362 13 is_stmt 1 discriminator 3 view .LVU149
+ 636 0020 2146     		mov	r1, r4
+ 637 0022 1020     		movs	r0, #16
+ 638 0024 FFF7FEFF 		bl	ads1299_send_cmd
+ 639              	.LVL59:
+ 363:Core/Src/freertos.c ****             HAL_Delay(1);
+ 640              		.loc 1 363 13 discriminator 3 view .LVU150
+ 641 0028 0120     		movs	r0, #1
+ 642 002a FFF7FEFF 		bl	HAL_Delay
+ 643              	.LVL60:
+ 360:Core/Src/freertos.c ****         {
+ 644              		.loc 1 360 32 discriminator 3 view .LVU151
+ 360:Core/Src/freertos.c ****         {
+ 645              		.loc 1 360 33 is_stmt 0 discriminator 3 view .LVU152
+ 646 002e 0134     		adds	r4, r4, #1
+ 647              	.LVL61:
+ 648              	.L15:
+ 360:Core/Src/freertos.c ****         {
+ 649              		.loc 1 360 25 is_stmt 1 discriminator 1 view .LVU153
+ 360:Core/Src/freertos.c ****         {
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 20
+
+
+ 650              		.loc 1 360 9 is_stmt 0 discriminator 1 view .LVU154
+ 651 0030 052C     		cmp	r4, #5
+ 652 0032 F5DD     		ble	.L16
+ 653              	.LVL62:
+ 654              	.L17:
+ 360:Core/Src/freertos.c ****         {
+ 655              		.loc 1 360 9 discriminator 1 view .LVU155
+ 656              	.LBE3:
+ 349:Core/Src/freertos.c ****     {
+ 657              		.loc 1 349 5 is_stmt 1 view .LVU156
+ 351:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 658              		.loc 1 351 9 view .LVU157
+ 659 0034 4FF0FF33 		mov	r3, #-1
+ 660 0038 0022     		movs	r2, #0
+ 661 003a 0449     		ldr	r1, .L19
+ 662 003c 0978     		ldrb	r1, [r1]	@ zero_extendqisi2
+ 663 003e 0448     		ldr	r0, .L19+4
+ 664 0040 0068     		ldr	r0, [r0]
+ 665 0042 FFF7FEFF 		bl	osEventFlagsWait
+ 666              	.LVL63:
+ 352:Core/Src/freertos.c ****         {
+ 667              		.loc 1 352 9 view .LVU158
+ 668              	.LBB4:
+ 352:Core/Src/freertos.c ****         {
+ 669              		.loc 1 352 14 view .LVU159
+ 352:Core/Src/freertos.c ****         {
+ 670              		.loc 1 352 18 is_stmt 0 view .LVU160
+ 671 0046 0124     		movs	r4, #1
+ 352:Core/Src/freertos.c ****         {
+ 672              		.loc 1 352 9 view .LVU161
+ 673 0048 E4E7     		b	.L13
+ 674              	.L20:
+ 675 004a 00BF     		.align	2
+ 676              	.L19:
+ 677 004c 00000000 		.word	REG_EVENT
+ 678 0050 00000000 		.word	.LANCHOR0
+ 679              	.LBE4:
+ 680              		.cfi_endproc
+ 681              	.LFE155:
+ 683              		.section	.text.data_send_func,"ax",%progbits
+ 684              		.align	1
+ 685              		.global	data_send_func
+ 686              		.syntax unified
+ 687              		.thumb
+ 688              		.thumb_func
+ 690              	data_send_func:
+ 691              	.LFB156:
+ 364:Core/Src/freertos.c ****         }
+ 365:Core/Src/freertos.c ****     }
+ 366:Core/Src/freertos.c ****     /* USER CODE END reg_read_func */
+ 367:Core/Src/freertos.c **** }
+ 368:Core/Src/freertos.c **** 
+ 369:Core/Src/freertos.c **** /* USER CODE BEGIN Header_data_send_func */
+ 370:Core/Src/freertos.c **** /**
+ 371:Core/Src/freertos.c ****  * @brief Function implementing the data_send thread.
+ 372:Core/Src/freertos.c ****  * @param argument: Not used
+ 373:Core/Src/freertos.c ****  * @retval None
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 21
+
+
+ 374:Core/Src/freertos.c ****  */
+ 375:Core/Src/freertos.c **** /* USER CODE END Header_data_send_func */
+ 376:Core/Src/freertos.c **** _Noreturn void data_send_func(void *argument)
+ 377:Core/Src/freertos.c **** {
+ 692              		.loc 1 377 1 is_stmt 1 view -0
+ 693              		.cfi_startproc
+ 694              		@ Volatile: function does not return.
+ 695              		@ args = 0, pretend = 0, frame = 0
+ 696              		@ frame_needed = 0, uses_anonymous_args = 0
+ 697              	.LVL64:
+ 698              		.loc 1 377 1 is_stmt 0 view .LVU163
+ 699 0000 08B5     		push	{r3, lr}
+ 700              		.cfi_def_cfa_offset 8
+ 701              		.cfi_offset 3, -8
+ 702              		.cfi_offset 14, -4
+ 703 0002 04E0     		b	.L22
+ 704              	.LVL65:
+ 705              	.L26:
+ 378:Core/Src/freertos.c ****     /* USER CODE BEGIN data_send_func */
+ 379:Core/Src/freertos.c ****     /* Infinite loop */
+ 380:Core/Src/freertos.c ****     for (;;)
+ 381:Core/Src/freertos.c ****     {
+ 382:Core/Src/freertos.c ****         osEventFlagsWait(eventHandle, READY_EVENT, osFlagsWaitAny, osWaitForever);
+ 383:Core/Src/freertos.c ****         if (buffer_select_flag == 0)
+ 384:Core/Src/freertos.c ****         {
+ 385:Core/Src/freertos.c ****             USBD_CUSTOM_HID_SendReport_HS(data_save_b, send_max_size);
+ 706              		.loc 1 385 13 is_stmt 1 view .LVU164
+ 707 0004 4FF45361 		mov	r1, #3376
+ 708 0008 0A48     		ldr	r0, .L27
+ 709 000a FFF7FEFF 		bl	USBD_CUSTOM_HID_SendReport_HS
+ 710              	.LVL66:
+ 711              	.L22:
+ 380:Core/Src/freertos.c ****     {
+ 712              		.loc 1 380 5 view .LVU165
+ 382:Core/Src/freertos.c ****         if (buffer_select_flag == 0)
+ 713              		.loc 1 382 9 view .LVU166
+ 714 000e 4FF0FF33 		mov	r3, #-1
+ 715 0012 0022     		movs	r2, #0
+ 716 0014 0849     		ldr	r1, .L27+4
+ 717 0016 0978     		ldrb	r1, [r1]	@ zero_extendqisi2
+ 718 0018 0848     		ldr	r0, .L27+8
+ 719 001a 0068     		ldr	r0, [r0]
+ 720 001c FFF7FEFF 		bl	osEventFlagsWait
+ 721              	.LVL67:
+ 383:Core/Src/freertos.c ****         {
+ 722              		.loc 1 383 9 view .LVU167
+ 383:Core/Src/freertos.c ****         {
+ 723              		.loc 1 383 32 is_stmt 0 view .LVU168
+ 724 0020 074B     		ldr	r3, .L27+12
+ 725 0022 1B68     		ldr	r3, [r3]
+ 383:Core/Src/freertos.c ****         {
+ 726              		.loc 1 383 12 view .LVU169
+ 727 0024 002B     		cmp	r3, #0
+ 728 0026 EDD0     		beq	.L26
+ 386:Core/Src/freertos.c ****         }
+ 387:Core/Src/freertos.c ****         else
+ 388:Core/Src/freertos.c ****         {
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 22
+
+
+ 389:Core/Src/freertos.c ****             USBD_CUSTOM_HID_SendReport_HS(data_save_a, send_max_size);
+ 729              		.loc 1 389 13 is_stmt 1 view .LVU170
+ 730 0028 4FF45361 		mov	r1, #3376
+ 731 002c 0548     		ldr	r0, .L27+16
+ 732 002e FFF7FEFF 		bl	USBD_CUSTOM_HID_SendReport_HS
+ 733              	.LVL68:
+ 734 0032 ECE7     		b	.L22
+ 735              	.L28:
+ 736              		.align	2
+ 737              	.L27:
+ 738 0034 00000000 		.word	.LANCHOR5
+ 739 0038 00000000 		.word	READY_EVENT
+ 740 003c 00000000 		.word	.LANCHOR0
+ 741 0040 00000000 		.word	.LANCHOR1
+ 742 0044 00000000 		.word	.LANCHOR2
+ 743              		.cfi_endproc
+ 744              	.LFE156:
+ 746              		.section	.text.self_test_func,"ax",%progbits
+ 747              		.align	1
+ 748              		.global	self_test_func
+ 749              		.syntax unified
+ 750              		.thumb
+ 751              		.thumb_func
+ 753              	self_test_func:
+ 754              	.LFB157:
+ 390:Core/Src/freertos.c ****         }
+ 391:Core/Src/freertos.c ****     }
+ 392:Core/Src/freertos.c ****     /* USER CODE END data_send_func */
+ 393:Core/Src/freertos.c **** }
+ 394:Core/Src/freertos.c **** 
+ 395:Core/Src/freertos.c **** /* USER CODE BEGIN Header_self_test_func */
+ 396:Core/Src/freertos.c **** /**
+ 397:Core/Src/freertos.c ****  * @brief Function implementing the self_test thread.
+ 398:Core/Src/freertos.c ****  * @param argument: Not used
+ 399:Core/Src/freertos.c ****  * @retval None
+ 400:Core/Src/freertos.c ****  */
+ 401:Core/Src/freertos.c **** /* USER CODE END Header_self_test_func */
+ 402:Core/Src/freertos.c **** _Noreturn void self_test_func(void *argument)
+ 403:Core/Src/freertos.c **** {
+ 755              		.loc 1 403 1 view -0
+ 756              		.cfi_startproc
+ 757              		@ Volatile: function does not return.
+ 758              		@ args = 0, pretend = 0, frame = 0
+ 759              		@ frame_needed = 0, uses_anonymous_args = 0
+ 760              	.LVL69:
+ 761              		.loc 1 403 1 is_stmt 0 view .LVU172
+ 762 0000 08B5     		push	{r3, lr}
+ 763              		.cfi_def_cfa_offset 8
+ 764              		.cfi_offset 3, -8
+ 765              		.cfi_offset 14, -4
+ 766 0002 25E0     		b	.L37
+ 767              	.LVL70:
+ 768              	.L31:
+ 769              	.LBB5:
+ 404:Core/Src/freertos.c ****     /* USER CODE BEGIN self_test_func */
+ 405:Core/Src/freertos.c ****     uint8_t reg_def = 0x65;
+ 406:Core/Src/freertos.c ****     /* Infinite loop */
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 23
+
+
+ 407:Core/Src/freertos.c ****     for (;;)
+ 408:Core/Src/freertos.c ****     {
+ 409:Core/Src/freertos.c ****         osEventFlagsWait(eventHandle, SELF_TEST_EVENT, osFlagsWaitAny, osWaitForever);
+ 410:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 411:Core/Src/freertos.c ****         {
+ 412:Core/Src/freertos.c ****             ads1299_send_cmd(ADS1299_SDATAC, i);
+ 770              		.loc 1 412 13 is_stmt 1 discriminator 3 view .LVU173
+ 771 0004 2146     		mov	r1, r4
+ 772 0006 1120     		movs	r0, #17
+ 773 0008 FFF7FEFF 		bl	ads1299_send_cmd
+ 774              	.LVL71:
+ 413:Core/Src/freertos.c ****             HAL_Delay(1);
+ 775              		.loc 1 413 13 discriminator 3 view .LVU174
+ 776 000c 0120     		movs	r0, #1
+ 777 000e FFF7FEFF 		bl	HAL_Delay
+ 778              	.LVL72:
+ 410:Core/Src/freertos.c ****         {
+ 779              		.loc 1 410 32 discriminator 3 view .LVU175
+ 410:Core/Src/freertos.c ****         {
+ 780              		.loc 1 410 33 is_stmt 0 discriminator 3 view .LVU176
+ 781 0012 0134     		adds	r4, r4, #1
+ 782              	.LVL73:
+ 783              	.L30:
+ 410:Core/Src/freertos.c ****         {
+ 784              		.loc 1 410 25 is_stmt 1 discriminator 1 view .LVU177
+ 410:Core/Src/freertos.c ****         {
+ 785              		.loc 1 410 9 is_stmt 0 discriminator 1 view .LVU178
+ 786 0014 052C     		cmp	r4, #5
+ 787 0016 F5DD     		ble	.L31
+ 788              	.LBE5:
+ 789              	.LBB6:
+ 414:Core/Src/freertos.c ****         }
+ 415:Core/Src/freertos.c **** 
+ 416:Core/Src/freertos.c ****         for (int j = 1; j < 6; j++)
+ 790              		.loc 1 416 18 view .LVU179
+ 791 0018 0125     		movs	r5, #1
+ 792 001a 09E0     		b	.L32
+ 793              	.LVL74:
+ 794              	.L33:
+ 795              	.LBB7:
+ 417:Core/Src/freertos.c ****         {
+ 418:Core/Src/freertos.c ****             for (int i = 0; i < 8; ++i)
+ 419:Core/Src/freertos.c ****             {
+ 420:Core/Src/freertos.c ****                 ads1299_reg_write(0x05 + i, reg_def, j);
+ 796              		.loc 1 420 17 is_stmt 1 discriminator 3 view .LVU180
+ 797 001c 601D     		adds	r0, r4, #5
+ 798 001e 2A46     		mov	r2, r5
+ 799 0020 6521     		movs	r1, #101
+ 800 0022 C0B2     		uxtb	r0, r0
+ 801 0024 FFF7FEFF 		bl	ads1299_reg_write
+ 802              	.LVL75:
+ 418:Core/Src/freertos.c ****             {
+ 803              		.loc 1 418 36 discriminator 3 view .LVU181
+ 804 0028 0134     		adds	r4, r4, #1
+ 805              	.LVL76:
+ 806              	.L34:
+ 418:Core/Src/freertos.c ****             {
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 24
+
+
+ 807              		.loc 1 418 29 discriminator 1 view .LVU182
+ 418:Core/Src/freertos.c ****             {
+ 808              		.loc 1 418 13 is_stmt 0 discriminator 1 view .LVU183
+ 809 002a 072C     		cmp	r4, #7
+ 810 002c F6DD     		ble	.L33
+ 811              	.LBE7:
+ 416:Core/Src/freertos.c ****         {
+ 812              		.loc 1 416 32 is_stmt 1 discriminator 2 view .LVU184
+ 416:Core/Src/freertos.c ****         {
+ 813              		.loc 1 416 33 is_stmt 0 discriminator 2 view .LVU185
+ 814 002e 0135     		adds	r5, r5, #1
+ 815              	.LVL77:
+ 816              	.L32:
+ 416:Core/Src/freertos.c ****         {
+ 817              		.loc 1 416 25 is_stmt 1 discriminator 1 view .LVU186
+ 416:Core/Src/freertos.c ****         {
+ 818              		.loc 1 416 9 is_stmt 0 discriminator 1 view .LVU187
+ 819 0030 052D     		cmp	r5, #5
+ 820 0032 01DC     		bgt	.L40
+ 821              	.LBB8:
+ 418:Core/Src/freertos.c ****             {
+ 822              		.loc 1 418 22 view .LVU188
+ 823 0034 0024     		movs	r4, #0
+ 824 0036 F8E7     		b	.L34
+ 825              	.L40:
+ 826              	.LBE8:
+ 827              	.LBE6:
+ 828              	.LBB9:
+ 421:Core/Src/freertos.c ****             }
+ 422:Core/Src/freertos.c ****         }
+ 423:Core/Src/freertos.c **** 
+ 424:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 829              		.loc 1 424 18 view .LVU189
+ 830 0038 0124     		movs	r4, #1
+ 831 003a 07E0     		b	.L35
+ 832              	.LVL78:
+ 833              	.L36:
+ 425:Core/Src/freertos.c ****         {
+ 426:Core/Src/freertos.c ****             ads1299_send_cmd(ADS1299_RDATAC, i);
+ 834              		.loc 1 426 13 is_stmt 1 discriminator 3 view .LVU190
+ 835 003c 2146     		mov	r1, r4
+ 836 003e 1020     		movs	r0, #16
+ 837 0040 FFF7FEFF 		bl	ads1299_send_cmd
+ 838              	.LVL79:
+ 427:Core/Src/freertos.c ****             HAL_Delay(1);
+ 839              		.loc 1 427 13 discriminator 3 view .LVU191
+ 840 0044 0120     		movs	r0, #1
+ 841 0046 FFF7FEFF 		bl	HAL_Delay
+ 842              	.LVL80:
+ 424:Core/Src/freertos.c ****         {
+ 843              		.loc 1 424 32 discriminator 3 view .LVU192
+ 424:Core/Src/freertos.c ****         {
+ 844              		.loc 1 424 33 is_stmt 0 discriminator 3 view .LVU193
+ 845 004a 0134     		adds	r4, r4, #1
+ 846              	.LVL81:
+ 847              	.L35:
+ 424:Core/Src/freertos.c ****         {
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 25
+
+
+ 848              		.loc 1 424 25 is_stmt 1 discriminator 1 view .LVU194
+ 424:Core/Src/freertos.c ****         {
+ 849              		.loc 1 424 9 is_stmt 0 discriminator 1 view .LVU195
+ 850 004c 052C     		cmp	r4, #5
+ 851 004e F5DD     		ble	.L36
+ 852              	.LVL82:
+ 853              	.L37:
+ 424:Core/Src/freertos.c ****         {
+ 854              		.loc 1 424 9 discriminator 1 view .LVU196
+ 855              	.LBE9:
+ 407:Core/Src/freertos.c ****     {
+ 856              		.loc 1 407 5 is_stmt 1 view .LVU197
+ 409:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 857              		.loc 1 409 9 view .LVU198
+ 858 0050 4FF0FF33 		mov	r3, #-1
+ 859 0054 0022     		movs	r2, #0
+ 860 0056 0449     		ldr	r1, .L41
+ 861 0058 0978     		ldrb	r1, [r1]	@ zero_extendqisi2
+ 862 005a 0448     		ldr	r0, .L41+4
+ 863 005c 0068     		ldr	r0, [r0]
+ 864 005e FFF7FEFF 		bl	osEventFlagsWait
+ 865              	.LVL83:
+ 410:Core/Src/freertos.c ****         {
+ 866              		.loc 1 410 9 view .LVU199
+ 867              	.LBB10:
+ 410:Core/Src/freertos.c ****         {
+ 868              		.loc 1 410 14 view .LVU200
+ 410:Core/Src/freertos.c ****         {
+ 869              		.loc 1 410 18 is_stmt 0 view .LVU201
+ 870 0062 0124     		movs	r4, #1
+ 410:Core/Src/freertos.c ****         {
+ 871              		.loc 1 410 9 view .LVU202
+ 872 0064 D6E7     		b	.L30
+ 873              	.L42:
+ 874 0066 00BF     		.align	2
+ 875              	.L41:
+ 876 0068 00000000 		.word	SELF_TEST_EVENT
+ 877 006c 00000000 		.word	.LANCHOR0
+ 878              	.LBE10:
+ 879              		.cfi_endproc
+ 880              	.LFE157:
+ 882              		.section	.text.normal_sig_func,"ax",%progbits
+ 883              		.align	1
+ 884              		.global	normal_sig_func
+ 885              		.syntax unified
+ 886              		.thumb
+ 887              		.thumb_func
+ 889              	normal_sig_func:
+ 890              	.LFB158:
+ 428:Core/Src/freertos.c ****         }
+ 429:Core/Src/freertos.c ****     }
+ 430:Core/Src/freertos.c ****     /* USER CODE END self_test_func */
+ 431:Core/Src/freertos.c **** }
+ 432:Core/Src/freertos.c **** 
+ 433:Core/Src/freertos.c **** /* USER CODE BEGIN Header_normal_sig_func */
+ 434:Core/Src/freertos.c **** /**
+ 435:Core/Src/freertos.c ****  * @brief Function implementing the normal_sig thread.
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 26
+
+
+ 436:Core/Src/freertos.c ****  * @param argument: Not used
+ 437:Core/Src/freertos.c ****  * @retval None
+ 438:Core/Src/freertos.c ****  */
+ 439:Core/Src/freertos.c **** /* USER CODE END Header_normal_sig_func */
+ 440:Core/Src/freertos.c **** _Noreturn void normal_sig_func(void *argument)
+ 441:Core/Src/freertos.c **** {
+ 891              		.loc 1 441 1 is_stmt 1 view -0
+ 892              		.cfi_startproc
+ 893              		@ Volatile: function does not return.
+ 894              		@ args = 0, pretend = 0, frame = 0
+ 895              		@ frame_needed = 0, uses_anonymous_args = 0
+ 896              	.LVL84:
+ 897              		.loc 1 441 1 is_stmt 0 view .LVU204
+ 898 0000 08B5     		push	{r3, lr}
+ 899              		.cfi_def_cfa_offset 8
+ 900              		.cfi_offset 3, -8
+ 901              		.cfi_offset 14, -4
+ 902 0002 25E0     		b	.L51
+ 903              	.LVL85:
+ 904              	.L45:
+ 905              	.LBB11:
+ 442:Core/Src/freertos.c ****     /* USER CODE BEGIN normal_sig_func */
+ 443:Core/Src/freertos.c ****     uint8_t normal_def = 0x60;
+ 444:Core/Src/freertos.c ****     /* Infinite loop */
+ 445:Core/Src/freertos.c ****     for (;;)
+ 446:Core/Src/freertos.c ****     {
+ 447:Core/Src/freertos.c ****         osEventFlagsWait(eventHandle, NORMAL_SIG_EVENT, osFlagsWaitAny, osWaitForever);
+ 448:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 449:Core/Src/freertos.c ****         {
+ 450:Core/Src/freertos.c ****             ads1299_send_cmd(ADS1299_SDATAC, i);
+ 906              		.loc 1 450 13 is_stmt 1 discriminator 3 view .LVU205
+ 907 0004 2146     		mov	r1, r4
+ 908 0006 1120     		movs	r0, #17
+ 909 0008 FFF7FEFF 		bl	ads1299_send_cmd
+ 910              	.LVL86:
+ 451:Core/Src/freertos.c ****             HAL_Delay(1);
+ 911              		.loc 1 451 13 discriminator 3 view .LVU206
+ 912 000c 0120     		movs	r0, #1
+ 913 000e FFF7FEFF 		bl	HAL_Delay
+ 914              	.LVL87:
+ 448:Core/Src/freertos.c ****         {
+ 915              		.loc 1 448 32 discriminator 3 view .LVU207
+ 448:Core/Src/freertos.c ****         {
+ 916              		.loc 1 448 33 is_stmt 0 discriminator 3 view .LVU208
+ 917 0012 0134     		adds	r4, r4, #1
+ 918              	.LVL88:
+ 919              	.L44:
+ 448:Core/Src/freertos.c ****         {
+ 920              		.loc 1 448 25 is_stmt 1 discriminator 1 view .LVU209
+ 448:Core/Src/freertos.c ****         {
+ 921              		.loc 1 448 9 is_stmt 0 discriminator 1 view .LVU210
+ 922 0014 052C     		cmp	r4, #5
+ 923 0016 F5DD     		ble	.L45
+ 924              	.LBE11:
+ 925              	.LBB12:
+ 452:Core/Src/freertos.c ****         }
+ 453:Core/Src/freertos.c **** 
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 27
+
+
+ 454:Core/Src/freertos.c ****         for (int j = 1; j < 6; j++)
+ 926              		.loc 1 454 18 view .LVU211
+ 927 0018 0125     		movs	r5, #1
+ 928 001a 09E0     		b	.L46
+ 929              	.LVL89:
+ 930              	.L47:
+ 931              	.LBB13:
+ 455:Core/Src/freertos.c ****         {
+ 456:Core/Src/freertos.c ****             for (int i = 0; i < 8; ++i)
+ 457:Core/Src/freertos.c ****             {
+ 458:Core/Src/freertos.c ****                 ads1299_reg_write(0x05 + i, normal_def, j);
+ 932              		.loc 1 458 17 is_stmt 1 discriminator 3 view .LVU212
+ 933 001c 601D     		adds	r0, r4, #5
+ 934 001e 2A46     		mov	r2, r5
+ 935 0020 6021     		movs	r1, #96
+ 936 0022 C0B2     		uxtb	r0, r0
+ 937 0024 FFF7FEFF 		bl	ads1299_reg_write
+ 938              	.LVL90:
+ 456:Core/Src/freertos.c ****             {
+ 939              		.loc 1 456 36 discriminator 3 view .LVU213
+ 940 0028 0134     		adds	r4, r4, #1
+ 941              	.LVL91:
+ 942              	.L48:
+ 456:Core/Src/freertos.c ****             {
+ 943              		.loc 1 456 29 discriminator 1 view .LVU214
+ 456:Core/Src/freertos.c ****             {
+ 944              		.loc 1 456 13 is_stmt 0 discriminator 1 view .LVU215
+ 945 002a 072C     		cmp	r4, #7
+ 946 002c F6DD     		ble	.L47
+ 947              	.LBE13:
+ 454:Core/Src/freertos.c ****         {
+ 948              		.loc 1 454 32 is_stmt 1 discriminator 2 view .LVU216
+ 454:Core/Src/freertos.c ****         {
+ 949              		.loc 1 454 33 is_stmt 0 discriminator 2 view .LVU217
+ 950 002e 0135     		adds	r5, r5, #1
+ 951              	.LVL92:
+ 952              	.L46:
+ 454:Core/Src/freertos.c ****         {
+ 953              		.loc 1 454 25 is_stmt 1 discriminator 1 view .LVU218
+ 454:Core/Src/freertos.c ****         {
+ 954              		.loc 1 454 9 is_stmt 0 discriminator 1 view .LVU219
+ 955 0030 052D     		cmp	r5, #5
+ 956 0032 01DC     		bgt	.L54
+ 957              	.LBB14:
+ 456:Core/Src/freertos.c ****             {
+ 958              		.loc 1 456 22 view .LVU220
+ 959 0034 0024     		movs	r4, #0
+ 960 0036 F8E7     		b	.L48
+ 961              	.L54:
+ 962              	.LBE14:
+ 963              	.LBE12:
+ 964              	.LBB15:
+ 459:Core/Src/freertos.c ****             }
+ 460:Core/Src/freertos.c ****         }
+ 461:Core/Src/freertos.c **** 
+ 462:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 965              		.loc 1 462 18 view .LVU221
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 28
+
+
+ 966 0038 0124     		movs	r4, #1
+ 967 003a 07E0     		b	.L49
+ 968              	.LVL93:
+ 969              	.L50:
+ 463:Core/Src/freertos.c ****         {
+ 464:Core/Src/freertos.c ****             ads1299_send_cmd(ADS1299_RDATAC, i);
+ 970              		.loc 1 464 13 is_stmt 1 discriminator 3 view .LVU222
+ 971 003c 2146     		mov	r1, r4
+ 972 003e 1020     		movs	r0, #16
+ 973 0040 FFF7FEFF 		bl	ads1299_send_cmd
+ 974              	.LVL94:
+ 465:Core/Src/freertos.c ****             HAL_Delay(1);
+ 975              		.loc 1 465 13 discriminator 3 view .LVU223
+ 976 0044 0120     		movs	r0, #1
+ 977 0046 FFF7FEFF 		bl	HAL_Delay
+ 978              	.LVL95:
+ 462:Core/Src/freertos.c ****         {
+ 979              		.loc 1 462 32 discriminator 3 view .LVU224
+ 462:Core/Src/freertos.c ****         {
+ 980              		.loc 1 462 33 is_stmt 0 discriminator 3 view .LVU225
+ 981 004a 0134     		adds	r4, r4, #1
+ 982              	.LVL96:
+ 983              	.L49:
+ 462:Core/Src/freertos.c ****         {
+ 984              		.loc 1 462 25 is_stmt 1 discriminator 1 view .LVU226
+ 462:Core/Src/freertos.c ****         {
+ 985              		.loc 1 462 9 is_stmt 0 discriminator 1 view .LVU227
+ 986 004c 052C     		cmp	r4, #5
+ 987 004e F5DD     		ble	.L50
+ 988              	.LVL97:
+ 989              	.L51:
+ 462:Core/Src/freertos.c ****         {
+ 990              		.loc 1 462 9 discriminator 1 view .LVU228
+ 991              	.LBE15:
+ 445:Core/Src/freertos.c ****     {
+ 992              		.loc 1 445 5 is_stmt 1 view .LVU229
+ 447:Core/Src/freertos.c ****         for (int i = 1; i < 6; i++)
+ 993              		.loc 1 447 9 view .LVU230
+ 994 0050 4FF0FF33 		mov	r3, #-1
+ 995 0054 0022     		movs	r2, #0
+ 996 0056 0449     		ldr	r1, .L55
+ 997 0058 0978     		ldrb	r1, [r1]	@ zero_extendqisi2
+ 998 005a 0448     		ldr	r0, .L55+4
+ 999 005c 0068     		ldr	r0, [r0]
+ 1000 005e FFF7FEFF 		bl	osEventFlagsWait
+ 1001              	.LVL98:
+ 448:Core/Src/freertos.c ****         {
+ 1002              		.loc 1 448 9 view .LVU231
+ 1003              	.LBB16:
+ 448:Core/Src/freertos.c ****         {
+ 1004              		.loc 1 448 14 view .LVU232
+ 448:Core/Src/freertos.c ****         {
+ 1005              		.loc 1 448 18 is_stmt 0 view .LVU233
+ 1006 0062 0124     		movs	r4, #1
+ 448:Core/Src/freertos.c ****         {
+ 1007              		.loc 1 448 9 view .LVU234
+ 1008 0064 D6E7     		b	.L44
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 29
+
+
+ 1009              	.L56:
+ 1010 0066 00BF     		.align	2
+ 1011              	.L55:
+ 1012 0068 00000000 		.word	NORMAL_SIG_EVENT
+ 1013 006c 00000000 		.word	.LANCHOR0
+ 1014              	.LBE16:
+ 1015              		.cfi_endproc
+ 1016              	.LFE158:
+ 1018              		.section	.text.MX_FREERTOS_Init,"ax",%progbits
+ 1019              		.align	1
+ 1020              		.global	MX_FREERTOS_Init
+ 1021              		.syntax unified
+ 1022              		.thumb
+ 1023              		.thumb_func
+ 1025              	MX_FREERTOS_Init:
+ 1026              	.LFB152:
+ 162:Core/Src/freertos.c ****     /* USER CODE BEGIN Init */
+ 1027              		.loc 1 162 1 is_stmt 1 view -0
+ 1028              		.cfi_startproc
+ 1029              		@ args = 0, pretend = 0, frame = 0
+ 1030              		@ frame_needed = 0, uses_anonymous_args = 0
+ 1031 0000 08B5     		push	{r3, lr}
+ 1032              		.cfi_def_cfa_offset 8
+ 1033              		.cfi_offset 3, -8
+ 1034              		.cfi_offset 14, -4
+ 173:Core/Src/freertos.c **** 
+ 1035              		.loc 1 173 5 view .LVU236
+ 173:Core/Src/freertos.c **** 
+ 1036              		.loc 1 173 24 is_stmt 0 view .LVU237
+ 1037 0002 1B4A     		ldr	r2, .L59
+ 1038 0004 0121     		movs	r1, #1
+ 1039 0006 0846     		mov	r0, r1
+ 1040 0008 FFF7FEFF 		bl	osSemaphoreNew
+ 1041              	.LVL99:
+ 173:Core/Src/freertos.c **** 
+ 1042              		.loc 1 173 22 view .LVU238
+ 1043 000c 194B     		ldr	r3, .L59+4
+ 1044 000e 1860     		str	r0, [r3]
+ 189:Core/Src/freertos.c **** 
+ 1045              		.loc 1 189 5 is_stmt 1 view .LVU239
+ 189:Core/Src/freertos.c **** 
+ 1046              		.loc 1 189 25 is_stmt 0 view .LVU240
+ 1047 0010 194A     		ldr	r2, .L59+8
+ 1048 0012 0021     		movs	r1, #0
+ 1049 0014 1948     		ldr	r0, .L59+12
+ 1050 0016 FFF7FEFF 		bl	osThreadNew
+ 1051              	.LVL100:
+ 189:Core/Src/freertos.c **** 
+ 1052              		.loc 1 189 23 view .LVU241
+ 1053 001a 194B     		ldr	r3, .L59+16
+ 1054 001c 1860     		str	r0, [r3]
+ 192:Core/Src/freertos.c **** 
+ 1055              		.loc 1 192 5 is_stmt 1 view .LVU242
+ 192:Core/Src/freertos.c **** 
+ 1056              		.loc 1 192 23 is_stmt 0 view .LVU243
+ 1057 001e 194A     		ldr	r2, .L59+20
+ 1058 0020 0021     		movs	r1, #0
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 30
+
+
+ 1059 0022 1948     		ldr	r0, .L59+24
+ 1060 0024 FFF7FEFF 		bl	osThreadNew
+ 1061              	.LVL101:
+ 192:Core/Src/freertos.c **** 
+ 1062              		.loc 1 192 21 view .LVU244
+ 1063 0028 184B     		ldr	r3, .L59+28
+ 1064 002a 1860     		str	r0, [r3]
+ 195:Core/Src/freertos.c **** 
+ 1065              		.loc 1 195 5 is_stmt 1 view .LVU245
+ 195:Core/Src/freertos.c **** 
+ 1066              		.loc 1 195 26 is_stmt 0 view .LVU246
+ 1067 002c 184A     		ldr	r2, .L59+32
+ 1068 002e 0021     		movs	r1, #0
+ 1069 0030 1848     		ldr	r0, .L59+36
+ 1070 0032 FFF7FEFF 		bl	osThreadNew
+ 1071              	.LVL102:
+ 195:Core/Src/freertos.c **** 
+ 1072              		.loc 1 195 24 view .LVU247
+ 1073 0036 184B     		ldr	r3, .L59+40
+ 1074 0038 1860     		str	r0, [r3]
+ 198:Core/Src/freertos.c **** 
+ 1075              		.loc 1 198 5 is_stmt 1 view .LVU248
+ 198:Core/Src/freertos.c **** 
+ 1076              		.loc 1 198 23 is_stmt 0 view .LVU249
+ 1077 003a 184A     		ldr	r2, .L59+44
+ 1078 003c 0021     		movs	r1, #0
+ 1079 003e 1848     		ldr	r0, .L59+48
+ 1080 0040 FFF7FEFF 		bl	osThreadNew
+ 1081              	.LVL103:
+ 198:Core/Src/freertos.c **** 
+ 1082              		.loc 1 198 21 view .LVU250
+ 1083 0044 174B     		ldr	r3, .L59+52
+ 1084 0046 1860     		str	r0, [r3]
+ 201:Core/Src/freertos.c **** 
+ 1085              		.loc 1 201 5 is_stmt 1 view .LVU251
+ 201:Core/Src/freertos.c **** 
+ 1086              		.loc 1 201 23 is_stmt 0 view .LVU252
+ 1087 0048 174A     		ldr	r2, .L59+56
+ 1088 004a 0021     		movs	r1, #0
+ 1089 004c 1748     		ldr	r0, .L59+60
+ 1090 004e FFF7FEFF 		bl	osThreadNew
+ 1091              	.LVL104:
+ 201:Core/Src/freertos.c **** 
+ 1092              		.loc 1 201 21 view .LVU253
+ 1093 0052 174B     		ldr	r3, .L59+64
+ 1094 0054 1860     		str	r0, [r3]
+ 204:Core/Src/freertos.c **** 
+ 1095              		.loc 1 204 5 is_stmt 1 view .LVU254
+ 204:Core/Src/freertos.c **** 
+ 1096              		.loc 1 204 24 is_stmt 0 view .LVU255
+ 1097 0056 174A     		ldr	r2, .L59+68
+ 1098 0058 0021     		movs	r1, #0
+ 1099 005a 1748     		ldr	r0, .L59+72
+ 1100 005c FFF7FEFF 		bl	osThreadNew
+ 1101              	.LVL105:
+ 204:Core/Src/freertos.c **** 
+ 1102              		.loc 1 204 22 view .LVU256
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 31
+
+
+ 1103 0060 164B     		ldr	r3, .L59+76
+ 1104 0062 1860     		str	r0, [r3]
+ 212:Core/Src/freertos.c **** 
+ 1105              		.loc 1 212 5 is_stmt 1 view .LVU257
+ 212:Core/Src/freertos.c **** 
+ 1106              		.loc 1 212 19 is_stmt 0 view .LVU258
+ 1107 0064 1648     		ldr	r0, .L59+80
+ 1108 0066 FFF7FEFF 		bl	osEventFlagsNew
+ 1109              	.LVL106:
+ 212:Core/Src/freertos.c **** 
+ 1110              		.loc 1 212 17 view .LVU259
+ 1111 006a 164B     		ldr	r3, .L59+84
+ 1112 006c 1860     		str	r0, [r3]
+ 217:Core/Src/freertos.c **** 
+ 1113              		.loc 1 217 1 view .LVU260
+ 1114 006e 08BD     		pop	{r3, pc}
+ 1115              	.L60:
+ 1116              		.align	2
+ 1117              	.L59:
+ 1118 0070 00000000 		.word	.LANCHOR6
+ 1119 0074 00000000 		.word	.LANCHOR7
+ 1120 0078 00000000 		.word	.LANCHOR8
+ 1121 007c 00000000 		.word	StartDefaultTask
+ 1122 0080 00000000 		.word	.LANCHOR9
+ 1123 0084 00000000 		.word	.LANCHOR10
+ 1124 0088 00000000 		.word	data_read_func
+ 1125 008c 00000000 		.word	.LANCHOR11
+ 1126 0090 00000000 		.word	.LANCHOR12
+ 1127 0094 00000000 		.word	reg_read_func
+ 1128 0098 00000000 		.word	.LANCHOR13
+ 1129 009c 00000000 		.word	.LANCHOR14
+ 1130 00a0 00000000 		.word	data_send_func
+ 1131 00a4 00000000 		.word	.LANCHOR15
+ 1132 00a8 00000000 		.word	.LANCHOR16
+ 1133 00ac 00000000 		.word	self_test_func
+ 1134 00b0 00000000 		.word	.LANCHOR17
+ 1135 00b4 00000000 		.word	.LANCHOR18
+ 1136 00b8 00000000 		.word	normal_sig_func
+ 1137 00bc 00000000 		.word	.LANCHOR19
+ 1138 00c0 00000000 		.word	.LANCHOR20
+ 1139 00c4 00000000 		.word	.LANCHOR0
+ 1140              		.cfi_endproc
+ 1141              	.LFE152:
+ 1143              		.global	event_attributes
+ 1144              		.section	.rodata.str1.4,"aMS",%progbits,1
+ 1145              		.align	2
+ 1146              	.LC0:
+ 1147 0000 6576656E 		.ascii	"event\000"
+ 1147      7400
+ 1148              		.global	eventHandle
+ 1149              		.global	DATA_READY_attributes
+ 1150 0006 0000     		.align	2
+ 1151              	.LC1:
+ 1152 0008 44415441 		.ascii	"DATA_READY\000"
+ 1152      5F524541 
+ 1152      445900
+ 1153              		.global	DATA_READYHandle
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 32
+
+
+ 1154              		.global	normal_sig_attributes
+ 1155 0013 00       		.align	2
+ 1156              	.LC2:
+ 1157 0014 6E6F726D 		.ascii	"normal_sig\000"
+ 1157      616C5F73 
+ 1157      696700
+ 1158              		.global	normal_sigHandle
+ 1159              		.global	self_test_attributes
+ 1160 001f 00       		.align	2
+ 1161              	.LC3:
+ 1162 0020 73656C66 		.ascii	"self_test\000"
+ 1162      5F746573 
+ 1162      7400
+ 1163              		.global	self_testHandle
+ 1164              		.global	data_send_attributes
+ 1165 002a 0000     		.align	2
+ 1166              	.LC4:
+ 1167 002c 64617461 		.ascii	"data_send\000"
+ 1167      5F73656E 
+ 1167      6400
+ 1168              		.global	data_sendHandle
+ 1169              		.global	all_reg_read_attributes
+ 1170 0036 0000     		.align	2
+ 1171              	.LC5:
+ 1172 0038 616C6C5F 		.ascii	"all_reg_read\000"
+ 1172      7265675F 
+ 1172      72656164 
+ 1172      00
+ 1173              		.global	all_reg_readHandle
+ 1174              		.global	data_read_attributes
+ 1175 0045 000000   		.align	2
+ 1176              	.LC6:
+ 1177 0048 64617461 		.ascii	"data_read\000"
+ 1177      5F726561 
+ 1177      6400
+ 1178              		.global	data_readHandle
+ 1179              		.global	defaultTask_attributes
+ 1180 0052 0000     		.align	2
+ 1181              	.LC7:
+ 1182 0054 64656661 		.ascii	"defaultTask\000"
+ 1182      756C7454 
+ 1182      61736B00 
+ 1183              		.global	defaultTaskHandle
+ 1184              		.global	send2
+ 1185              		.global	send1
+ 1186              		.global	data_save_b
+ 1187              		.global	data_save_a
+ 1188              		.global	send_max_size
+ 1189              		.global	itr_num_max
+ 1190              		.global	buffer_select_flag
+ 1191              		.section	.bss.DATA_READYHandle,"aw",%nobits
+ 1192              		.align	2
+ 1193              		.set	.LANCHOR7,. + 0
+ 1196              	DATA_READYHandle:
+ 1197 0000 00000000 		.space	4
+ 1198              		.section	.bss.all_reg_readHandle,"aw",%nobits
+ 1199              		.align	2
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 33
+
+
+ 1200              		.set	.LANCHOR13,. + 0
+ 1203              	all_reg_readHandle:
+ 1204 0000 00000000 		.space	4
+ 1205              		.section	.bss.buffer_select_flag,"aw",%nobits
+ 1206              		.align	2
+ 1207              		.set	.LANCHOR1,. + 0
+ 1210              	buffer_select_flag:
+ 1211 0000 00000000 		.space	4
+ 1212              		.section	.bss.data_readHandle,"aw",%nobits
+ 1213              		.align	2
+ 1214              		.set	.LANCHOR11,. + 0
+ 1217              	data_readHandle:
+ 1218 0000 00000000 		.space	4
+ 1219              		.section	.bss.data_save_a,"aw",%nobits
+ 1220              		.align	2
+ 1221              		.set	.LANCHOR2,. + 0
+ 1224              	data_save_a:
+ 1225 0000 00000000 		.space	3376
+ 1225      00000000 
+ 1225      00000000 
+ 1225      00000000 
+ 1225      00000000 
+ 1226              		.section	.bss.data_save_b,"aw",%nobits
+ 1227              		.align	2
+ 1228              		.set	.LANCHOR5,. + 0
+ 1231              	data_save_b:
+ 1232 0000 00000000 		.space	3376
+ 1232      00000000 
+ 1232      00000000 
+ 1232      00000000 
+ 1232      00000000 
+ 1233              		.section	.bss.data_sendHandle,"aw",%nobits
+ 1234              		.align	2
+ 1235              		.set	.LANCHOR15,. + 0
+ 1238              	data_sendHandle:
+ 1239 0000 00000000 		.space	4
+ 1240              		.section	.bss.defaultTaskHandle,"aw",%nobits
+ 1241              		.align	2
+ 1242              		.set	.LANCHOR9,. + 0
+ 1245              	defaultTaskHandle:
+ 1246 0000 00000000 		.space	4
+ 1247              		.section	.bss.eventHandle,"aw",%nobits
+ 1248              		.align	2
+ 1249              		.set	.LANCHOR0,. + 0
+ 1252              	eventHandle:
+ 1253 0000 00000000 		.space	4
+ 1254              		.section	.bss.normal_sigHandle,"aw",%nobits
+ 1255              		.align	2
+ 1256              		.set	.LANCHOR19,. + 0
+ 1259              	normal_sigHandle:
+ 1260 0000 00000000 		.space	4
+ 1261              		.section	.bss.self_testHandle,"aw",%nobits
+ 1262              		.align	2
+ 1263              		.set	.LANCHOR17,. + 0
+ 1266              	self_testHandle:
+ 1267 0000 00000000 		.space	4
+ 1268              		.section	.bss.send2,"aw",%nobits
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 34
+
+
+ 1269              		.align	2
+ 1270              		.set	.LANCHOR4,. + 0
+ 1273              	send2:
+ 1274 0000 00000000 		.space	24
+ 1274      00000000 
+ 1274      00000000 
+ 1274      00000000 
+ 1274      00000000 
+ 1275              		.section	.data.send1,"aw"
+ 1276              		.align	2
+ 1277              		.set	.LANCHOR3,. + 0
+ 1280              	send1:
+ 1281 0000 AAAAAA   		.ascii	"\252\252\252"
+ 1282              		.section	.rodata.DATA_READY_attributes,"a"
+ 1283              		.align	2
+ 1284              		.set	.LANCHOR6,. + 0
+ 1287              	DATA_READY_attributes:
+ 1288 0000 08000000 		.word	.LC1
+ 1289 0004 00000000 		.space	12
+ 1289      00000000 
+ 1289      00000000 
+ 1290              		.section	.rodata.all_reg_read_attributes,"a"
+ 1291              		.align	2
+ 1292              		.set	.LANCHOR12,. + 0
+ 1295              	all_reg_read_attributes:
+ 1296 0000 38000000 		.word	.LC5
+ 1297 0004 00000000 		.space	16
+ 1297      00000000 
+ 1297      00000000 
+ 1297      00000000 
+ 1298 0014 00080000 		.word	2048
+ 1299 0018 08000000 		.word	8
+ 1300 001c 00000000 		.space	8
+ 1300      00000000 
+ 1301              		.section	.rodata.data_read_attributes,"a"
+ 1302              		.align	2
+ 1303              		.set	.LANCHOR10,. + 0
+ 1306              	data_read_attributes:
+ 1307 0000 48000000 		.word	.LC6
+ 1308 0004 00000000 		.space	16
+ 1308      00000000 
+ 1308      00000000 
+ 1308      00000000 
+ 1309 0014 00080000 		.word	2048
+ 1310 0018 08000000 		.word	8
+ 1311 001c 00000000 		.space	8
+ 1311      00000000 
+ 1312              		.section	.rodata.data_send_attributes,"a"
+ 1313              		.align	2
+ 1314              		.set	.LANCHOR14,. + 0
+ 1317              	data_send_attributes:
+ 1318 0000 2C000000 		.word	.LC4
+ 1319 0004 00000000 		.space	16
+ 1319      00000000 
+ 1319      00000000 
+ 1319      00000000 
+ 1320 0014 00080000 		.word	2048
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 35
+
+
+ 1321 0018 08000000 		.word	8
+ 1322 001c 00000000 		.space	8
+ 1322      00000000 
+ 1323              		.section	.rodata.defaultTask_attributes,"a"
+ 1324              		.align	2
+ 1325              		.set	.LANCHOR8,. + 0
+ 1328              	defaultTask_attributes:
+ 1329 0000 54000000 		.word	.LC7
+ 1330 0004 00000000 		.space	16
+ 1330      00000000 
+ 1330      00000000 
+ 1330      00000000 
+ 1331 0014 00020000 		.word	512
+ 1332 0018 18000000 		.word	24
+ 1333 001c 00000000 		.space	8
+ 1333      00000000 
+ 1334              		.section	.rodata.event_attributes,"a"
+ 1335              		.align	2
+ 1336              		.set	.LANCHOR20,. + 0
+ 1339              	event_attributes:
+ 1340 0000 00000000 		.word	.LC0
+ 1341 0004 00000000 		.space	12
+ 1341      00000000 
+ 1341      00000000 
+ 1342              		.section	.rodata.itr_num_max,"a"
+ 1343              		.align	2
+ 1346              	itr_num_max:
+ 1347 0000 19000000 		.word	25
+ 1348              		.section	.rodata.normal_sig_attributes,"a"
+ 1349              		.align	2
+ 1350              		.set	.LANCHOR18,. + 0
+ 1353              	normal_sig_attributes:
+ 1354 0000 14000000 		.word	.LC2
+ 1355 0004 00000000 		.space	16
+ 1355      00000000 
+ 1355      00000000 
+ 1355      00000000 
+ 1356 0014 00020000 		.word	512
+ 1357 0018 08000000 		.word	8
+ 1358 001c 00000000 		.space	8
+ 1358      00000000 
+ 1359              		.section	.rodata.self_test_attributes,"a"
+ 1360              		.align	2
+ 1361              		.set	.LANCHOR16,. + 0
+ 1364              	self_test_attributes:
+ 1365 0000 20000000 		.word	.LC3
+ 1366 0004 00000000 		.space	16
+ 1366      00000000 
+ 1366      00000000 
+ 1366      00000000 
+ 1367 0014 00020000 		.word	512
+ 1368 0018 08000000 		.word	8
+ 1369 001c 00000000 		.space	8
+ 1369      00000000 
+ 1370              		.section	.rodata.send_max_size,"a"
+ 1371              		.align	2
+ 1374              	send_max_size:
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 36
+
+
+ 1375 0000 300D0000 		.word	3376
+ 1376              		.text
+ 1377              	.Letext0:
+ 1378              		.file 2 "d:\\tool\\gcc-arm-none-eabi\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1379              		.file 3 "d:\\tool\\gcc-arm-none-eabi\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 1380              		.file 4 "Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h743xx.h"
+ 1381              		.file 5 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h"
+ 1382              		.file 6 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma.h"
+ 1383              		.file 7 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h"
+ 1384              		.file 8 "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2/cmsis_os2.h"
+ 1385              		.file 9 "Core/Inc/spi.h"
+ 1386              		.file 10 "Core/Inc/ads1299.h"
+ 1387              		.file 11 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h"
+ 1388              		.file 12 "USB_DEVICE/App/usbd_custom_hid_if.h"
+ 1389              		.file 13 "Core/Inc/gpio.h"
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 37
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 freertos.c
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:19     .text.StartDefaultTask:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:25     .text.StartDefaultTask:00000000 StartDefaultTask
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:54     .text.data_read_func:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:60     .text.data_read_func:00000000 data_read_func
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:565    .text.data_read_func:00000334 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:580    .text.reg_read_func:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:586    .text.reg_read_func:00000000 reg_read_func
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:677    .text.reg_read_func:0000004c $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:684    .text.data_send_func:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:690    .text.data_send_func:00000000 data_send_func
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:738    .text.data_send_func:00000034 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:747    .text.self_test_func:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:753    .text.self_test_func:00000000 self_test_func
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:876    .text.self_test_func:00000068 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:883    .text.normal_sig_func:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:889    .text.normal_sig_func:00000000 normal_sig_func
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1012   .text.normal_sig_func:00000068 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1019   .text.MX_FREERTOS_Init:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1025   .text.MX_FREERTOS_Init:00000000 MX_FREERTOS_Init
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1118   .text.MX_FREERTOS_Init:00000070 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1339   .rodata.event_attributes:00000000 event_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1145   .rodata.str1.4:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1252   .bss.eventHandle:00000000 eventHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1287   .rodata.DATA_READY_attributes:00000000 DATA_READY_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1196   .bss.DATA_READYHandle:00000000 DATA_READYHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1353   .rodata.normal_sig_attributes:00000000 normal_sig_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1259   .bss.normal_sigHandle:00000000 normal_sigHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1364   .rodata.self_test_attributes:00000000 self_test_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1266   .bss.self_testHandle:00000000 self_testHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1317   .rodata.data_send_attributes:00000000 data_send_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1238   .bss.data_sendHandle:00000000 data_sendHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1295   .rodata.all_reg_read_attributes:00000000 all_reg_read_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1203   .bss.all_reg_readHandle:00000000 all_reg_readHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1306   .rodata.data_read_attributes:00000000 data_read_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1217   .bss.data_readHandle:00000000 data_readHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1328   .rodata.defaultTask_attributes:00000000 defaultTask_attributes
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1245   .bss.defaultTaskHandle:00000000 defaultTaskHandle
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1273   .bss.send2:00000000 send2
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1280   .data.send1:00000000 send1
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1231   .bss.data_save_b:00000000 data_save_b
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1224   .bss.data_save_a:00000000 data_save_a
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1374   .rodata.send_max_size:00000000 send_max_size
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1346   .rodata.itr_num_max:00000000 itr_num_max
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1210   .bss.buffer_select_flag:00000000 buffer_select_flag
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1192   .bss.DATA_READYHandle:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1199   .bss.all_reg_readHandle:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1206   .bss.buffer_select_flag:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1213   .bss.data_readHandle:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1220   .bss.data_save_a:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1227   .bss.data_save_b:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1234   .bss.data_sendHandle:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1241   .bss.defaultTaskHandle:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1248   .bss.eventHandle:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1255   .bss.normal_sigHandle:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1262   .bss.self_testHandle:00000000 $d
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s 			page 38
+
+
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1269   .bss.send2:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1276   .data.send1:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1283   .rodata.DATA_READY_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1291   .rodata.all_reg_read_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1302   .rodata.data_read_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1313   .rodata.data_send_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1324   .rodata.defaultTask_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1335   .rodata.event_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1343   .rodata.itr_num_max:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1349   .rodata.normal_sig_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1360   .rodata.self_test_attributes:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccSsOuZh.s:1371   .rodata.send_max_size:00000000 $d
+
+UNDEFINED SYMBOLS
+MX_USB_DEVICE_Init
+osDelay
+CS_LOW
+HAL_SPI_TransmitReceive
+CS_HIGH
+osEventFlagsWait
+osEventFlagsClear
+calcCRC
+osEventFlagsSet
+itr_num
+hspi3
+ITR_EVENT
+CMD_EVENT
+READY_EVENT
+ads1299_send_cmd
+HAL_Delay
+all_ads1299_reg_read
+REG_EVENT
+USBD_CUSTOM_HID_SendReport_HS
+ads1299_reg_write
+SELF_TEST_EVENT
+NORMAL_SIG_EVENT
+osSemaphoreNew
+osThreadNew
+osEventFlagsNew

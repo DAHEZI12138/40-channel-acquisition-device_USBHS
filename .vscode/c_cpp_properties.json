@@ -1,0 +1,27 @@
+{
+  "configurations": [
+    {
+      "name": "STM32",
+      "includePath": [
+        "Core/Inc",
+        "Drivers/CMSIS/Device/ST/STM32H7xx/Include",
+        "Drivers/CMSIS/Include",
+        "Drivers/STM32H7xx_HAL_Driver/Inc",
+        "Drivers/STM32H7xx_HAL_Driver/Inc/Legacy",
+        "Middlewares/ST/STM32_USB_Device_Library/Class/CustomHID/Inc",
+        "Middlewares/ST/STM32_USB_Device_Library/Core/Inc",
+        "Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS_V2",
+        "Middlewares/Third_Party/FreeRTOS/Source/include",
+        "Middlewares/Third_Party/FreeRTOS/Source/portable/GCC/ARM_CM4F",
+        "USB_DEVICE/App",
+        "USB_DEVICE/Target"
+      ],
+      "defines": [
+        "STM32H743xx",
+        "USE_HAL_DRIVER"
+      ],
+      "compilerPath": "D:\\TOOL\\GCC-ARM-NONE-EABI\\BIN\\ARM-NONE-EABI-GCC.EXE"
+    }
+  ],
+  "version": 4
+}

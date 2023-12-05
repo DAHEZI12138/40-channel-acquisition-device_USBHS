@@ -1,0 +1,34 @@
+{
+    "configurations": [
+        {
+            "showDevDebugOutput": "parsed",
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/stm32h743iit6_ads1299_usbhs.elf",
+            "name": "Debug STM32",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "preLaunchTask": "Build STM",
+            "device": "stm32h743",
+            "configFiles": [
+                "openocd.cfg"
+            ],
+            "svdFile": "STM32H743x.svd"
+        },
+        {
+            "showDevDebugOutput": "parsed",
+            "cwd": "${workspaceRoot}",
+            "executable": "./build/stm32h743iit6_ads1299_usbhs.elf",
+            "name": "Attach STM32",
+            "request": "attach",
+            "type": "cortex-debug",
+            "servertype": "openocd",
+            "preLaunchTask": "Build STM",
+            "device": "stm32h743",
+            "configFiles": [
+                "openocd.cfg"
+            ],
+            "svdFile": "STM32H743x.svd"
+        }
+    ]
+}

@@ -1,0 +1,1589 @@
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 1
+
+
+   1              		.cpu cortex-m7
+   2              		.arch armv7e-m
+   3              		.fpu fpv5-d16
+   4              		.eabi_attribute 28, 1
+   5              		.eabi_attribute 20, 1
+   6              		.eabi_attribute 21, 1
+   7              		.eabi_attribute 23, 3
+   8              		.eabi_attribute 24, 1
+   9              		.eabi_attribute 25, 1
+  10              		.eabi_attribute 26, 1
+  11              		.eabi_attribute 30, 1
+  12              		.eabi_attribute 34, 1
+  13              		.eabi_attribute 18, 4
+  14              		.file	"ads1299.c"
+  15              		.text
+  16              	.Ltext0:
+  17              		.cfi_sections	.debug_frame
+  18              		.section	.text.ads1299_reg_read,"ax",%progbits
+  19              		.align	1
+  20              		.global	ads1299_reg_read
+  21              		.syntax unified
+  22              		.thumb
+  23              		.thumb_func
+  25              	ads1299_reg_read:
+  26              	.LVL0:
+  27              	.LFB148:
+  28              		.file 1 "Core/Src/ads1299.c"
+   1:Core/Src/ads1299.c **** //
+   2:Core/Src/ads1299.c **** // Created by 30973 on 2022/5/1.
+   3:Core/Src/ads1299.c **** //
+   4:Core/Src/ads1299.c **** 
+   5:Core/Src/ads1299.c **** #include <tim.h>
+   6:Core/Src/ads1299.c **** #include "usbd_custom_hid_if.h"
+   7:Core/Src/ads1299.c **** #include "ads1299.h"
+   8:Core/Src/ads1299.c **** #include "spi.h"
+   9:Core/Src/ads1299.c **** #include "gpio.h"
+  10:Core/Src/ads1299.c **** 
+  11:Core/Src/ads1299.c **** // 第一片1299寄存器配置
+  12:Core/Src/ads1299.c **** unsigned char ADS1x9x_Default_Register_Settings_1[24] =
+  13:Core/Src/ads1299.c ****     {
+  14:Core/Src/ads1299.c ****         0x00,     // 00-Device ID read Only
+  15:Core/Src/ads1299.c ****         0xF4,     // 01-CONFIG1 //5：500 sps  4：1k sps  3:2k sps
+  16:Core/Src/ads1299.c ****         0xD4,     // 02-CONFIG2
+  17:Core/Src/ads1299.c ****         0xEE,     // 03-CONFIG3 启用BIAS，使用内部参考电压 //0xFE 0xE0
+  18:Core/Src/ads1299.c ****         0x07,     // 04-LOFF   设置成0x00 开启直流电极脱落检测
+  19:Core/Src/ads1299.c ****         CH_n_SET, // 05-CH1SET (default)
+  20:Core/Src/ads1299.c ****         CH_n_SET, // 06-CH2SET (default)
+  21:Core/Src/ads1299.c ****         CH_n_SET, // 07-CH3SET (default)
+  22:Core/Src/ads1299.c ****         CH_n_SET, // 08-CH4SET (default)
+  23:Core/Src/ads1299.c ****         CH_n_SET, // 09-CH5SET (default)
+  24:Core/Src/ads1299.c ****         CH_n_SET, // 0A-CH6SET (default)
+  25:Core/Src/ads1299.c ****         CH_n_SET, // 0B-CH7SET (default)
+  26:Core/Src/ads1299.c ****         CH_n_SET, // 0C-CH8SET (default)
+  27:Core/Src/ads1299.c ****         0xFF,     // 0D-BIAS_SENSP
+  28:Core/Src/ads1299.c ****         0xFF,     // 0E-BIAS_SENSN
+  29:Core/Src/ads1299.c ****         0xFF,     // 0F-LOFF_SENSP (default)    0XFF:Turn on the P-side of all channels for lead-of
+  30:Core/Src/ads1299.c ****         0xFF,     // 10-LOFF_SENSN (default)    0XFF:Turn on the N-side of all channels for lead-of
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 2
+
+
+  31:Core/Src/ads1299.c ****         0x00,     // 11-LOFF_FLIP  (default)
+  32:Core/Src/ads1299.c ****         0x00,     // 12-LOFF_STATP (default)
+  33:Core/Src/ads1299.c ****         0x00,     // 13-LOFF_STATN (default)    可以通过读取这两个寄存器判断电极是
+  34:Core/Src/ads1299.c ****         0x00,     // 14-GPIO
+  35:Core/Src/ads1299.c ****         0x00,     // 15-MISC1
+  36:Core/Src/ads1299.c ****         0x00,     // 16-MISC2
+  37:Core/Src/ads1299.c ****         0x00      // 17-CONFIG4   0x02: Turn on dc lead-off comparators
+  38:Core/Src/ads1299.c **** };
+  39:Core/Src/ads1299.c **** 
+  40:Core/Src/ads1299.c **** // 2-5片1299寄存器配置
+  41:Core/Src/ads1299.c **** unsigned char ADS1x9x_Default_Register_Settings_2_5[24] =
+  42:Core/Src/ads1299.c ****     {
+  43:Core/Src/ads1299.c ****         0x00,     // 00-Device ID read Only
+  44:Core/Src/ads1299.c ****         0xD4,     // 01-CONFIG1 //5：500 sps  4：1k sps  3:2k sps
+  45:Core/Src/ads1299.c ****         0xD4,     // 02-CONFIG2
+  46:Core/Src/ads1299.c ****         0xE0,     // 03-CONFIG3 启用BIAS，使用内部参考电压 //0xFE 0xE0
+  47:Core/Src/ads1299.c ****         0x07,     // 04-LOFF   设置成0x13 开启电极脱落检测
+  48:Core/Src/ads1299.c ****         CH_n_SET, // 05-CH1SET (default)
+  49:Core/Src/ads1299.c ****         CH_n_SET, // 06-CH2SET (default)
+  50:Core/Src/ads1299.c ****         CH_n_SET, // 07-CH3SET (default)
+  51:Core/Src/ads1299.c ****         CH_n_SET, // 08-CH4SET (default)
+  52:Core/Src/ads1299.c ****         CH_n_SET, // 09-CH5SET (default)
+  53:Core/Src/ads1299.c ****         CH_n_SET, // 0A-CH6SET (default)
+  54:Core/Src/ads1299.c ****         CH_n_SET, // 0B-CH7SET (default)
+  55:Core/Src/ads1299.c ****         CH_n_SET, // 0C-CH8SET (default)
+  56:Core/Src/ads1299.c ****         0xFF,     // 0D-BIAS_SENSP
+  57:Core/Src/ads1299.c ****         0xFF,     // 0E-BIAS_SENSN
+  58:Core/Src/ads1299.c ****         0xFF,     // 0F-LOFF_SENSP (default)    0XFF:Turn on the P-side of all channels for lead-of
+  59:Core/Src/ads1299.c ****         0xFF,     // 10-LOFF_SENSN (default)    0XFF:Turn on the N-side of all channels for lead-of
+  60:Core/Src/ads1299.c ****         0x00,     // 11-LOFF_FLIP  (default)
+  61:Core/Src/ads1299.c ****         0x00,     // 12-LOFF_STATP (default)
+  62:Core/Src/ads1299.c ****         0x00,     // 13-LOFF_STATN (default)
+  63:Core/Src/ads1299.c ****         0x00,     // 14-GPIO
+  64:Core/Src/ads1299.c ****         0x00,     // 15-MISC1
+  65:Core/Src/ads1299.c ****         0x00,     // 16-MISC2
+  66:Core/Src/ads1299.c ****         0x00      // 17-CONFIG4   0x02: Turn on dc lead-off comparators
+  67:Core/Src/ads1299.c **** };
+  68:Core/Src/ads1299.c **** 
+  69:Core/Src/ads1299.c **** /** ads1299_reg_read
+  70:Core/Src/ads1299.c ****  * @brief 读一个寄存器
+  71:Core/Src/ads1299.c ****  * @param addr: 寄存器地址
+  72:Core/Src/ads1299.c ****  * @param chip: 指定芯片
+  73:Core/Src/ads1299.c ****  * @retval 返回寄存器的值
+  74:Core/Src/ads1299.c ****  */
+  75:Core/Src/ads1299.c **** uint8_t ads1299_reg_read(uint8_t addr, int chip)
+  76:Core/Src/ads1299.c **** {
+  29              		.loc 1 76 1 view -0
+  30              		.cfi_startproc
+  31              		@ args = 0, pretend = 0, frame = 8
+  32              		@ frame_needed = 0, uses_anonymous_args = 0
+  33              		.loc 1 76 1 is_stmt 0 view .LVU1
+  34 0000 10B5     		push	{r4, lr}
+  35              		.cfi_def_cfa_offset 8
+  36              		.cfi_offset 4, -8
+  37              		.cfi_offset 14, -4
+  38 0002 84B0     		sub	sp, sp, #16
+  39              		.cfi_def_cfa_offset 24
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 3
+
+
+  40 0004 0C46     		mov	r4, r1
+  77:Core/Src/ads1299.c ****     uint8_t data_send[3];
+  41              		.loc 1 77 5 is_stmt 1 view .LVU2
+  78:Core/Src/ads1299.c ****     uint8_t data_receive[3];
+  42              		.loc 1 78 5 view .LVU3
+  79:Core/Src/ads1299.c ****     data_send[0] = addr | ADS1299_RREG;
+  43              		.loc 1 79 5 view .LVU4
+  44              		.loc 1 79 18 is_stmt 0 view .LVU5
+  45 0006 40F02000 		orr	r0, r0, #32
+  46              	.LVL1:
+  47              		.loc 1 79 18 view .LVU6
+  48 000a 8DF80C00 		strb	r0, [sp, #12]
+  80:Core/Src/ads1299.c ****     data_send[1] = 0x00;
+  49              		.loc 1 80 5 is_stmt 1 view .LVU7
+  50              		.loc 1 80 18 is_stmt 0 view .LVU8
+  51 000e 0023     		movs	r3, #0
+  52 0010 8DF80D30 		strb	r3, [sp, #13]
+  81:Core/Src/ads1299.c ****     data_send[2] = 0xAA;
+  53              		.loc 1 81 5 is_stmt 1 view .LVU9
+  54              		.loc 1 81 18 is_stmt 0 view .LVU10
+  55 0014 AA23     		movs	r3, #170
+  56 0016 8DF80E30 		strb	r3, [sp, #14]
+  82:Core/Src/ads1299.c ****     CS_LOW(chip);
+  57              		.loc 1 82 5 is_stmt 1 view .LVU11
+  58 001a 0846     		mov	r0, r1
+  59 001c FFF7FEFF 		bl	CS_LOW
+  60              	.LVL2:
+  83:Core/Src/ads1299.c ****     HAL_SPI_TransmitReceive(&hspi3, data_send, data_receive, 3, 100);
+  61              		.loc 1 83 5 view .LVU12
+  62 0020 6423     		movs	r3, #100
+  63 0022 0093     		str	r3, [sp]
+  64 0024 0323     		movs	r3, #3
+  65 0026 02AA     		add	r2, sp, #8
+  66 0028 03A9     		add	r1, sp, #12
+  67 002a 0648     		ldr	r0, .L3
+  68 002c FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+  69              	.LVL3:
+  84:Core/Src/ads1299.c ****     HAL_Delay(1);
+  70              		.loc 1 84 5 view .LVU13
+  71 0030 0120     		movs	r0, #1
+  72 0032 FFF7FEFF 		bl	HAL_Delay
+  73              	.LVL4:
+  85:Core/Src/ads1299.c ****     CS_HIGH(chip);
+  74              		.loc 1 85 5 view .LVU14
+  75 0036 2046     		mov	r0, r4
+  76 0038 FFF7FEFF 		bl	CS_HIGH
+  77              	.LVL5:
+  86:Core/Src/ads1299.c ****     return data_receive[2];
+  78              		.loc 1 86 5 view .LVU15
+  87:Core/Src/ads1299.c **** }
+  79              		.loc 1 87 1 is_stmt 0 view .LVU16
+  80 003c 9DF80A00 		ldrb	r0, [sp, #10]	@ zero_extendqisi2
+  81 0040 04B0     		add	sp, sp, #16
+  82              		.cfi_def_cfa_offset 8
+  83              		@ sp needed
+  84 0042 10BD     		pop	{r4, pc}
+  85              	.LVL6:
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 4
+
+
+  86              	.L4:
+  87              		.loc 1 87 1 view .LVU17
+  88              		.align	2
+  89              	.L3:
+  90 0044 00000000 		.word	hspi3
+  91              		.cfi_endproc
+  92              	.LFE148:
+  94              		.section	.text.ads1299_reg_write,"ax",%progbits
+  95              		.align	1
+  96              		.global	ads1299_reg_write
+  97              		.syntax unified
+  98              		.thumb
+  99              		.thumb_func
+ 101              	ads1299_reg_write:
+ 102              	.LVL7:
+ 103              	.LFB149:
+  88:Core/Src/ads1299.c **** 
+  89:Core/Src/ads1299.c **** /** ads1299_reg_write
+  90:Core/Src/ads1299.c ****  * @brief 写一个寄存器.
+  91:Core/Src/ads1299.c ****  * @param addr: 寄存器地址
+  92:Core/Src/ads1299.c ****  * @param chip: 指定芯片
+  93:Core/Src/ads1299.c ****  * @retval None
+  94:Core/Src/ads1299.c ****  */
+  95:Core/Src/ads1299.c **** void ads1299_reg_write(uint8_t addr, uint8_t data, int chip)
+  96:Core/Src/ads1299.c **** {
+ 104              		.loc 1 96 1 is_stmt 1 view -0
+ 105              		.cfi_startproc
+ 106              		@ args = 0, pretend = 0, frame = 8
+ 107              		@ frame_needed = 0, uses_anonymous_args = 0
+ 108              		.loc 1 96 1 is_stmt 0 view .LVU19
+ 109 0000 10B5     		push	{r4, lr}
+ 110              		.cfi_def_cfa_offset 8
+ 111              		.cfi_offset 4, -8
+ 112              		.cfi_offset 14, -4
+ 113 0002 82B0     		sub	sp, sp, #8
+ 114              		.cfi_def_cfa_offset 16
+ 115 0004 1446     		mov	r4, r2
+  97:Core/Src/ads1299.c ****     uint8_t data_send[3];
+ 116              		.loc 1 97 5 is_stmt 1 view .LVU20
+  98:Core/Src/ads1299.c ****     data_send[0] = addr | ADS1299_WREG;
+ 117              		.loc 1 98 5 view .LVU21
+ 118              		.loc 1 98 18 is_stmt 0 view .LVU22
+ 119 0006 40F04000 		orr	r0, r0, #64
+ 120              	.LVL8:
+ 121              		.loc 1 98 18 view .LVU23
+ 122 000a 8DF80400 		strb	r0, [sp, #4]
+  99:Core/Src/ads1299.c ****     data_send[1] = 0x00;
+ 123              		.loc 1 99 5 is_stmt 1 view .LVU24
+ 124              		.loc 1 99 18 is_stmt 0 view .LVU25
+ 125 000e 0023     		movs	r3, #0
+ 126 0010 8DF80530 		strb	r3, [sp, #5]
+ 100:Core/Src/ads1299.c ****     data_send[2] = data;
+ 127              		.loc 1 100 5 is_stmt 1 view .LVU26
+ 128              		.loc 1 100 18 is_stmt 0 view .LVU27
+ 129 0014 8DF80610 		strb	r1, [sp, #6]
+ 101:Core/Src/ads1299.c ****     CS_LOW(chip);
+ 130              		.loc 1 101 5 is_stmt 1 view .LVU28
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 5
+
+
+ 131 0018 1046     		mov	r0, r2
+ 132 001a FFF7FEFF 		bl	CS_LOW
+ 133              	.LVL9:
+ 102:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 3, 100);
+ 134              		.loc 1 102 5 view .LVU29
+ 135 001e 6423     		movs	r3, #100
+ 136 0020 0322     		movs	r2, #3
+ 137 0022 01A9     		add	r1, sp, #4
+ 138 0024 0548     		ldr	r0, .L7
+ 139 0026 FFF7FEFF 		bl	HAL_SPI_Transmit
+ 140              	.LVL10:
+ 103:Core/Src/ads1299.c ****     HAL_Delay(1);
+ 141              		.loc 1 103 5 view .LVU30
+ 142 002a 0120     		movs	r0, #1
+ 143 002c FFF7FEFF 		bl	HAL_Delay
+ 144              	.LVL11:
+ 104:Core/Src/ads1299.c ****     CS_HIGH(chip);
+ 145              		.loc 1 104 5 view .LVU31
+ 146 0030 2046     		mov	r0, r4
+ 147 0032 FFF7FEFF 		bl	CS_HIGH
+ 148              	.LVL12:
+ 105:Core/Src/ads1299.c **** }
+ 149              		.loc 1 105 1 is_stmt 0 view .LVU32
+ 150 0036 02B0     		add	sp, sp, #8
+ 151              		.cfi_def_cfa_offset 8
+ 152              		@ sp needed
+ 153 0038 10BD     		pop	{r4, pc}
+ 154              	.LVL13:
+ 155              	.L8:
+ 156              		.loc 1 105 1 view .LVU33
+ 157 003a 00BF     		.align	2
+ 158              	.L7:
+ 159 003c 00000000 		.word	hspi3
+ 160              		.cfi_endproc
+ 161              	.LFE149:
+ 163              		.section	.text.ads1299_send_cmd,"ax",%progbits
+ 164              		.align	1
+ 165              		.global	ads1299_send_cmd
+ 166              		.syntax unified
+ 167              		.thumb
+ 168              		.thumb_func
+ 170              	ads1299_send_cmd:
+ 171              	.LVL14:
+ 172              	.LFB150:
+ 106:Core/Src/ads1299.c **** 
+ 107:Core/Src/ads1299.c **** /** ads1299_send_cmd
+ 108:Core/Src/ads1299.c ****  * @brief 发送指令
+ 109:Core/Src/ads1299.c ****  * @param cmd: 指令代码
+ 110:Core/Src/ads1299.c ****  * @param chip: 指定芯片
+ 111:Core/Src/ads1299.c ****  * @retval None
+ 112:Core/Src/ads1299.c ****  */
+ 113:Core/Src/ads1299.c **** void ads1299_send_cmd(uint8_t cmd, int chip)
+ 114:Core/Src/ads1299.c **** {
+ 173              		.loc 1 114 1 is_stmt 1 view -0
+ 174              		.cfi_startproc
+ 175              		@ args = 0, pretend = 0, frame = 8
+ 176              		@ frame_needed = 0, uses_anonymous_args = 0
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 6
+
+
+ 177              		.loc 1 114 1 is_stmt 0 view .LVU35
+ 178 0000 10B5     		push	{r4, lr}
+ 179              		.cfi_def_cfa_offset 8
+ 180              		.cfi_offset 4, -8
+ 181              		.cfi_offset 14, -4
+ 182 0002 82B0     		sub	sp, sp, #8
+ 183              		.cfi_def_cfa_offset 16
+ 184 0004 0C46     		mov	r4, r1
+ 185 0006 8DF80700 		strb	r0, [sp, #7]
+ 115:Core/Src/ads1299.c ****     CS_LOW(chip);
+ 186              		.loc 1 115 5 is_stmt 1 view .LVU36
+ 187 000a 0846     		mov	r0, r1
+ 188              	.LVL15:
+ 189              		.loc 1 115 5 is_stmt 0 view .LVU37
+ 190 000c FFF7FEFF 		bl	CS_LOW
+ 191              	.LVL16:
+ 116:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, &cmd, 1, 100);
+ 192              		.loc 1 116 5 is_stmt 1 view .LVU38
+ 193 0010 6423     		movs	r3, #100
+ 194 0012 0122     		movs	r2, #1
+ 195 0014 0DF10701 		add	r1, sp, #7
+ 196 0018 0548     		ldr	r0, .L11
+ 197 001a FFF7FEFF 		bl	HAL_SPI_Transmit
+ 198              	.LVL17:
+ 117:Core/Src/ads1299.c ****     HAL_Delay(1);
+ 199              		.loc 1 117 5 view .LVU39
+ 200 001e 0120     		movs	r0, #1
+ 201 0020 FFF7FEFF 		bl	HAL_Delay
+ 202              	.LVL18:
+ 118:Core/Src/ads1299.c ****     CS_HIGH(chip);
+ 203              		.loc 1 118 5 view .LVU40
+ 204 0024 2046     		mov	r0, r4
+ 205 0026 FFF7FEFF 		bl	CS_HIGH
+ 206              	.LVL19:
+ 119:Core/Src/ads1299.c **** }
+ 207              		.loc 1 119 1 is_stmt 0 view .LVU41
+ 208 002a 02B0     		add	sp, sp, #8
+ 209              		.cfi_def_cfa_offset 8
+ 210              		@ sp needed
+ 211 002c 10BD     		pop	{r4, pc}
+ 212              	.LVL20:
+ 213              	.L12:
+ 214              		.loc 1 119 1 view .LVU42
+ 215 002e 00BF     		.align	2
+ 216              	.L11:
+ 217 0030 00000000 		.word	hspi3
+ 218              		.cfi_endproc
+ 219              	.LFE150:
+ 221              		.section	.text.ads1299_all_reg_write_1,"ax",%progbits
+ 222              		.align	1
+ 223              		.global	ads1299_all_reg_write_1
+ 224              		.syntax unified
+ 225              		.thumb
+ 226              		.thumb_func
+ 228              	ads1299_all_reg_write_1:
+ 229              	.LFB151:
+ 120:Core/Src/ads1299.c **** 
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 7
+
+
+ 121:Core/Src/ads1299.c **** // 初始化第一片1299的寄存器
+ 122:Core/Src/ads1299.c **** void ads1299_all_reg_write_1()
+ 123:Core/Src/ads1299.c **** {
+ 230              		.loc 1 123 1 is_stmt 1 view -0
+ 231              		.cfi_startproc
+ 232              		@ args = 0, pretend = 0, frame = 32
+ 233              		@ frame_needed = 0, uses_anonymous_args = 0
+ 234 0000 00B5     		push	{lr}
+ 235              		.cfi_def_cfa_offset 4
+ 236              		.cfi_offset 14, -4
+ 237 0002 89B0     		sub	sp, sp, #36
+ 238              		.cfi_def_cfa_offset 40
+ 124:Core/Src/ads1299.c ****     uint8_t data_send[25];
+ 239              		.loc 1 124 5 view .LVU44
+ 125:Core/Src/ads1299.c ****     data_send[0] = 0x01 | ADS1299_WREG; // 从地址为0x01的寄存器开始写
+ 240              		.loc 1 125 5 view .LVU45
+ 241              		.loc 1 125 18 is_stmt 0 view .LVU46
+ 242 0004 4123     		movs	r3, #65
+ 243 0006 8DF80430 		strb	r3, [sp, #4]
+ 126:Core/Src/ads1299.c ****     data_send[1] = 0x16;                // 需要写入的寄存器个数为23 0x17 减一为0x16
+ 244              		.loc 1 126 5 is_stmt 1 view .LVU47
+ 245              		.loc 1 126 18 is_stmt 0 view .LVU48
+ 246 000a 1623     		movs	r3, #22
+ 247 000c 8DF80530 		strb	r3, [sp, #5]
+ 127:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 248              		.loc 1 127 5 is_stmt 1 view .LVU49
+ 249              	.LBB2:
+ 250              		.loc 1 127 10 view .LVU50
+ 251              	.LVL21:
+ 252              		.loc 1 127 14 is_stmt 0 view .LVU51
+ 253 0010 0023     		movs	r3, #0
+ 254              		.loc 1 127 5 view .LVU52
+ 255 0012 07E0     		b	.L14
+ 256              	.LVL22:
+ 257              	.L15:
+ 128:Core/Src/ads1299.c ****     {
+ 129:Core/Src/ads1299.c ****         data_send[i + 2] = ADS1x9x_Default_Register_Settings_1[i + 1]; // 写入的值
+ 258              		.loc 1 129 9 is_stmt 1 discriminator 3 view .LVU53
+ 259              		.loc 1 129 66 is_stmt 0 discriminator 3 view .LVU54
+ 260 0014 5A1C     		adds	r2, r3, #1
+ 261              		.loc 1 129 63 discriminator 3 view .LVU55
+ 262 0016 0D49     		ldr	r1, .L17
+ 263 0018 895C     		ldrb	r1, [r1, r2]	@ zero_extendqisi2
+ 264              		.loc 1 129 26 discriminator 3 view .LVU56
+ 265 001a 2233     		adds	r3, r3, #34
+ 266              	.LVL23:
+ 267              		.loc 1 129 26 discriminator 3 view .LVU57
+ 268 001c 6B44     		add	r3, sp, r3
+ 269              	.LVL24:
+ 270              		.loc 1 129 26 discriminator 3 view .LVU58
+ 271 001e 03F81C1C 		strb	r1, [r3, #-28]
+ 127:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 272              		.loc 1 127 29 is_stmt 1 discriminator 3 view .LVU59
+ 273              	.LVL25:
+ 127:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 274              		.loc 1 127 30 is_stmt 0 discriminator 3 view .LVU60
+ 275 0022 1346     		mov	r3, r2
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 8
+
+
+ 276              	.LVL26:
+ 277              	.L14:
+ 127:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 278              		.loc 1 127 21 is_stmt 1 discriminator 1 view .LVU61
+ 127:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 279              		.loc 1 127 5 is_stmt 0 discriminator 1 view .LVU62
+ 280 0024 162B     		cmp	r3, #22
+ 281 0026 F5DD     		ble	.L15
+ 282              	.LBE2:
+ 130:Core/Src/ads1299.c ****     }
+ 131:Core/Src/ads1299.c ****     CS_LOW(1);
+ 283              		.loc 1 131 5 is_stmt 1 view .LVU63
+ 284 0028 0120     		movs	r0, #1
+ 285 002a FFF7FEFF 		bl	CS_LOW
+ 286              	.LVL27:
+ 132:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 25, 100);
+ 287              		.loc 1 132 5 view .LVU64
+ 288 002e 6423     		movs	r3, #100
+ 289 0030 1922     		movs	r2, #25
+ 290 0032 01A9     		add	r1, sp, #4
+ 291 0034 0648     		ldr	r0, .L17+4
+ 292 0036 FFF7FEFF 		bl	HAL_SPI_Transmit
+ 293              	.LVL28:
+ 133:Core/Src/ads1299.c ****     HAL_Delay(1);
+ 294              		.loc 1 133 5 view .LVU65
+ 295 003a 0120     		movs	r0, #1
+ 296 003c FFF7FEFF 		bl	HAL_Delay
+ 297              	.LVL29:
+ 134:Core/Src/ads1299.c ****     CS_HIGH(1);
+ 298              		.loc 1 134 5 view .LVU66
+ 299 0040 0120     		movs	r0, #1
+ 300 0042 FFF7FEFF 		bl	CS_HIGH
+ 301              	.LVL30:
+ 135:Core/Src/ads1299.c **** }
+ 302              		.loc 1 135 1 is_stmt 0 view .LVU67
+ 303 0046 09B0     		add	sp, sp, #36
+ 304              		.cfi_def_cfa_offset 4
+ 305              		@ sp needed
+ 306 0048 5DF804FB 		ldr	pc, [sp], #4
+ 307              	.L18:
+ 308              		.align	2
+ 309              	.L17:
+ 310 004c 00000000 		.word	.LANCHOR0
+ 311 0050 00000000 		.word	hspi3
+ 312              		.cfi_endproc
+ 313              	.LFE151:
+ 315              		.section	.text.ads1299_all_reg_write_2_5,"ax",%progbits
+ 316              		.align	1
+ 317              		.global	ads1299_all_reg_write_2_5
+ 318              		.syntax unified
+ 319              		.thumb
+ 320              		.thumb_func
+ 322              	ads1299_all_reg_write_2_5:
+ 323              	.LVL31:
+ 324              	.LFB152:
+ 136:Core/Src/ads1299.c **** 
+ 137:Core/Src/ads1299.c **** // 初始化2-5片1299的寄存器
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 9
+
+
+ 138:Core/Src/ads1299.c **** void ads1299_all_reg_write_2_5(int chip)
+ 139:Core/Src/ads1299.c **** {
+ 325              		.loc 1 139 1 is_stmt 1 view -0
+ 326              		.cfi_startproc
+ 327              		@ args = 0, pretend = 0, frame = 32
+ 328              		@ frame_needed = 0, uses_anonymous_args = 0
+ 329              		.loc 1 139 1 is_stmt 0 view .LVU69
+ 330 0000 10B5     		push	{r4, lr}
+ 331              		.cfi_def_cfa_offset 8
+ 332              		.cfi_offset 4, -8
+ 333              		.cfi_offset 14, -4
+ 334 0002 88B0     		sub	sp, sp, #32
+ 335              		.cfi_def_cfa_offset 40
+ 336 0004 0446     		mov	r4, r0
+ 140:Core/Src/ads1299.c ****     uint8_t data_send[25];
+ 337              		.loc 1 140 5 is_stmt 1 view .LVU70
+ 141:Core/Src/ads1299.c ****     data_send[0] = 0x01 | ADS1299_WREG; // 从地址为0x01的寄存器开始写
+ 338              		.loc 1 141 5 view .LVU71
+ 339              		.loc 1 141 18 is_stmt 0 view .LVU72
+ 340 0006 4123     		movs	r3, #65
+ 341 0008 8DF80430 		strb	r3, [sp, #4]
+ 142:Core/Src/ads1299.c ****     data_send[1] = 0x16;                // 需要写入的寄存器个数为23 0x17 减一为0x16
+ 342              		.loc 1 142 5 is_stmt 1 view .LVU73
+ 343              		.loc 1 142 18 is_stmt 0 view .LVU74
+ 344 000c 1623     		movs	r3, #22
+ 345 000e 8DF80530 		strb	r3, [sp, #5]
+ 143:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 346              		.loc 1 143 5 is_stmt 1 view .LVU75
+ 347              	.LBB3:
+ 348              		.loc 1 143 10 view .LVU76
+ 349              	.LVL32:
+ 350              		.loc 1 143 14 is_stmt 0 view .LVU77
+ 351 0012 0023     		movs	r3, #0
+ 352              		.loc 1 143 5 view .LVU78
+ 353 0014 07E0     		b	.L20
+ 354              	.LVL33:
+ 355              	.L21:
+ 144:Core/Src/ads1299.c ****     {
+ 145:Core/Src/ads1299.c ****         data_send[i + 2] = ADS1x9x_Default_Register_Settings_2_5[i + 1]; // 写入的值
+ 356              		.loc 1 145 9 is_stmt 1 discriminator 3 view .LVU79
+ 357              		.loc 1 145 68 is_stmt 0 discriminator 3 view .LVU80
+ 358 0016 5A1C     		adds	r2, r3, #1
+ 359              		.loc 1 145 65 discriminator 3 view .LVU81
+ 360 0018 0C49     		ldr	r1, .L23
+ 361 001a 895C     		ldrb	r1, [r1, r2]	@ zero_extendqisi2
+ 362              		.loc 1 145 26 discriminator 3 view .LVU82
+ 363 001c 2233     		adds	r3, r3, #34
+ 364              	.LVL34:
+ 365              		.loc 1 145 26 discriminator 3 view .LVU83
+ 366 001e 6B44     		add	r3, sp, r3
+ 367              	.LVL35:
+ 368              		.loc 1 145 26 discriminator 3 view .LVU84
+ 369 0020 03F81C1C 		strb	r1, [r3, #-28]
+ 143:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 370              		.loc 1 143 29 is_stmt 1 discriminator 3 view .LVU85
+ 371              	.LVL36:
+ 143:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 10
+
+
+ 372              		.loc 1 143 30 is_stmt 0 discriminator 3 view .LVU86
+ 373 0024 1346     		mov	r3, r2
+ 374              	.LVL37:
+ 375              	.L20:
+ 143:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 376              		.loc 1 143 21 is_stmt 1 discriminator 1 view .LVU87
+ 143:Core/Src/ads1299.c ****     for (int i = 0; i < 23; i++)
+ 377              		.loc 1 143 5 is_stmt 0 discriminator 1 view .LVU88
+ 378 0026 162B     		cmp	r3, #22
+ 379 0028 F5DD     		ble	.L21
+ 380              	.LBE3:
+ 146:Core/Src/ads1299.c ****     }
+ 147:Core/Src/ads1299.c ****     CS_LOW(chip);
+ 381              		.loc 1 147 5 is_stmt 1 view .LVU89
+ 382 002a 2046     		mov	r0, r4
+ 383              	.LVL38:
+ 384              		.loc 1 147 5 is_stmt 0 view .LVU90
+ 385 002c FFF7FEFF 		bl	CS_LOW
+ 386              	.LVL39:
+ 148:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 25, 100);
+ 387              		.loc 1 148 5 is_stmt 1 view .LVU91
+ 388 0030 6423     		movs	r3, #100
+ 389 0032 1922     		movs	r2, #25
+ 390 0034 01A9     		add	r1, sp, #4
+ 391 0036 0648     		ldr	r0, .L23+4
+ 392 0038 FFF7FEFF 		bl	HAL_SPI_Transmit
+ 393              	.LVL40:
+ 149:Core/Src/ads1299.c ****     HAL_Delay(1);
+ 394              		.loc 1 149 5 view .LVU92
+ 395 003c 0120     		movs	r0, #1
+ 396 003e FFF7FEFF 		bl	HAL_Delay
+ 397              	.LVL41:
+ 150:Core/Src/ads1299.c ****     CS_HIGH(chip);
+ 398              		.loc 1 150 5 view .LVU93
+ 399 0042 2046     		mov	r0, r4
+ 400 0044 FFF7FEFF 		bl	CS_HIGH
+ 401              	.LVL42:
+ 151:Core/Src/ads1299.c **** }
+ 402              		.loc 1 151 1 is_stmt 0 view .LVU94
+ 403 0048 08B0     		add	sp, sp, #32
+ 404              		.cfi_def_cfa_offset 8
+ 405              		@ sp needed
+ 406 004a 10BD     		pop	{r4, pc}
+ 407              	.LVL43:
+ 408              	.L24:
+ 409              		.loc 1 151 1 view .LVU95
+ 410              		.align	2
+ 411              	.L23:
+ 412 004c 00000000 		.word	.LANCHOR1
+ 413 0050 00000000 		.word	hspi3
+ 414              		.cfi_endproc
+ 415              	.LFE152:
+ 417              		.section	.text.ads1299_check_init,"ax",%progbits
+ 418              		.align	1
+ 419              		.global	ads1299_check_init
+ 420              		.syntax unified
+ 421              		.thumb
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 11
+
+
+ 422              		.thumb_func
+ 424              	ads1299_check_init:
+ 425              	.LFB153:
+ 152:Core/Src/ads1299.c **** 
+ 153:Core/Src/ads1299.c **** // 初始化所有1299寄存器 由于时钟设置问题，需要先初始化第一片1299
+ 154:Core/Src/ads1299.c **** void ads1299_check_init()
+ 155:Core/Src/ads1299.c **** {
+ 426              		.loc 1 155 1 is_stmt 1 view -0
+ 427              		.cfi_startproc
+ 428              		@ args = 0, pretend = 0, frame = 0
+ 429              		@ frame_needed = 0, uses_anonymous_args = 0
+ 430 0000 10B5     		push	{r4, lr}
+ 431              		.cfi_def_cfa_offset 8
+ 432              		.cfi_offset 4, -8
+ 433              		.cfi_offset 14, -4
+ 156:Core/Src/ads1299.c ****     HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_RESET); // reset high
+ 434              		.loc 1 156 5 view .LVU97
+ 435 0002 3C4C     		ldr	r4, .L27
+ 436 0004 0022     		movs	r2, #0
+ 437 0006 4FF48061 		mov	r1, #1024
+ 438 000a 2046     		mov	r0, r4
+ 439 000c FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 440              	.LVL44:
+ 157:Core/Src/ads1299.c ****     HAL_Delay(1000);
+ 441              		.loc 1 157 5 view .LVU98
+ 442 0010 4FF47A70 		mov	r0, #1000
+ 443 0014 FFF7FEFF 		bl	HAL_Delay
+ 444              	.LVL45:
+ 158:Core/Src/ads1299.c ****     HAL_GPIO_WritePin(RESET_GPIO_Port, RESET_Pin, GPIO_PIN_SET); // reset high
+ 445              		.loc 1 158 5 view .LVU99
+ 446 0018 0122     		movs	r2, #1
+ 447 001a 4FF48061 		mov	r1, #1024
+ 448 001e 2046     		mov	r0, r4
+ 449 0020 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 450              	.LVL46:
+ 159:Core/Src/ads1299.c ****     HAL_Delay(300);
+ 451              		.loc 1 159 5 view .LVU100
+ 452 0024 4FF49670 		mov	r0, #300
+ 453 0028 FFF7FEFF 		bl	HAL_Delay
+ 454              	.LVL47:
+ 160:Core/Src/ads1299.c ****     HAL_GPIO_WritePin(START_GPIO_Port, START_Pin, GPIO_PIN_RESET);
+ 455              		.loc 1 160 5 view .LVU101
+ 456 002c 0022     		movs	r2, #0
+ 457 002e 4FF40071 		mov	r1, #512
+ 458 0032 2046     		mov	r0, r4
+ 459 0034 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 460              	.LVL48:
+ 161:Core/Src/ads1299.c **** 
+ 162:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_SDATAC, 1);
+ 461              		.loc 1 162 5 view .LVU102
+ 462 0038 0121     		movs	r1, #1
+ 463 003a 1120     		movs	r0, #17
+ 464 003c FFF7FEFF 		bl	ads1299_send_cmd
+ 465              	.LVL49:
+ 163:Core/Src/ads1299.c ****     HAL_Delay(300);
+ 466              		.loc 1 163 5 view .LVU103
+ 467 0040 4FF49670 		mov	r0, #300
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 12
+
+
+ 468 0044 FFF7FEFF 		bl	HAL_Delay
+ 469              	.LVL50:
+ 164:Core/Src/ads1299.c ****     ads1299_all_reg_write_1(); // 初始化第一片1299
+ 470              		.loc 1 164 5 view .LVU104
+ 471 0048 FFF7FEFF 		bl	ads1299_all_reg_write_1
+ 472              	.LVL51:
+ 165:Core/Src/ads1299.c ****     HAL_Delay(1000);
+ 473              		.loc 1 165 5 view .LVU105
+ 474 004c 4FF47A70 		mov	r0, #1000
+ 475 0050 FFF7FEFF 		bl	HAL_Delay
+ 476              	.LVL52:
+ 166:Core/Src/ads1299.c **** 
+ 167:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_SDATAC, 2);
+ 477              		.loc 1 167 5 view .LVU106
+ 478 0054 0221     		movs	r1, #2
+ 479 0056 1120     		movs	r0, #17
+ 480 0058 FFF7FEFF 		bl	ads1299_send_cmd
+ 481              	.LVL53:
+ 168:Core/Src/ads1299.c ****     ads1299_all_reg_write_2_5(2);
+ 482              		.loc 1 168 5 view .LVU107
+ 483 005c 0220     		movs	r0, #2
+ 484 005e FFF7FEFF 		bl	ads1299_all_reg_write_2_5
+ 485              	.LVL54:
+ 169:Core/Src/ads1299.c ****     HAL_Delay(50);
+ 486              		.loc 1 169 5 view .LVU108
+ 487 0062 3220     		movs	r0, #50
+ 488 0064 FFF7FEFF 		bl	HAL_Delay
+ 489              	.LVL55:
+ 170:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_SDATAC, 3);
+ 490              		.loc 1 170 5 view .LVU109
+ 491 0068 0321     		movs	r1, #3
+ 492 006a 1120     		movs	r0, #17
+ 493 006c FFF7FEFF 		bl	ads1299_send_cmd
+ 494              	.LVL56:
+ 171:Core/Src/ads1299.c ****     ads1299_all_reg_write_2_5(3);
+ 495              		.loc 1 171 5 view .LVU110
+ 496 0070 0320     		movs	r0, #3
+ 497 0072 FFF7FEFF 		bl	ads1299_all_reg_write_2_5
+ 498              	.LVL57:
+ 172:Core/Src/ads1299.c ****     HAL_Delay(50);
+ 499              		.loc 1 172 5 view .LVU111
+ 500 0076 3220     		movs	r0, #50
+ 501 0078 FFF7FEFF 		bl	HAL_Delay
+ 502              	.LVL58:
+ 173:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_SDATAC, 4);
+ 503              		.loc 1 173 5 view .LVU112
+ 504 007c 0421     		movs	r1, #4
+ 505 007e 1120     		movs	r0, #17
+ 506 0080 FFF7FEFF 		bl	ads1299_send_cmd
+ 507              	.LVL59:
+ 174:Core/Src/ads1299.c ****     ads1299_all_reg_write_2_5(4);
+ 508              		.loc 1 174 5 view .LVU113
+ 509 0084 0420     		movs	r0, #4
+ 510 0086 FFF7FEFF 		bl	ads1299_all_reg_write_2_5
+ 511              	.LVL60:
+ 175:Core/Src/ads1299.c ****     HAL_Delay(50);
+ 512              		.loc 1 175 5 view .LVU114
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 13
+
+
+ 513 008a 3220     		movs	r0, #50
+ 514 008c FFF7FEFF 		bl	HAL_Delay
+ 515              	.LVL61:
+ 176:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_SDATAC, 5);
+ 516              		.loc 1 176 5 view .LVU115
+ 517 0090 0521     		movs	r1, #5
+ 518 0092 1120     		movs	r0, #17
+ 519 0094 FFF7FEFF 		bl	ads1299_send_cmd
+ 520              	.LVL62:
+ 177:Core/Src/ads1299.c ****     ads1299_all_reg_write_2_5(5);
+ 521              		.loc 1 177 5 view .LVU116
+ 522 0098 0520     		movs	r0, #5
+ 523 009a FFF7FEFF 		bl	ads1299_all_reg_write_2_5
+ 524              	.LVL63:
+ 178:Core/Src/ads1299.c ****     HAL_Delay(1000);
+ 525              		.loc 1 178 5 view .LVU117
+ 526 009e 4FF47A70 		mov	r0, #1000
+ 527 00a2 FFF7FEFF 		bl	HAL_Delay
+ 528              	.LVL64:
+ 179:Core/Src/ads1299.c **** 
+ 180:Core/Src/ads1299.c ****     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_SET);
+ 529              		.loc 1 180 5 view .LVU118
+ 530 00a6 A4F5C054 		sub	r4, r4, #6144
+ 531 00aa 0122     		movs	r2, #1
+ 532 00ac 4FF40071 		mov	r1, #512
+ 533 00b0 2046     		mov	r0, r4
+ 534 00b2 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 535              	.LVL65:
+ 181:Core/Src/ads1299.c ****     HAL_Delay(500);
+ 536              		.loc 1 181 5 view .LVU119
+ 537 00b6 4FF4FA70 		mov	r0, #500
+ 538 00ba FFF7FEFF 		bl	HAL_Delay
+ 539              	.LVL66:
+ 182:Core/Src/ads1299.c ****     HAL_GPIO_WritePin(LED1_GPIO_Port, LED1_Pin, GPIO_PIN_RESET);
+ 540              		.loc 1 182 5 view .LVU120
+ 541 00be 0022     		movs	r2, #0
+ 542 00c0 4FF40071 		mov	r1, #512
+ 543 00c4 2046     		mov	r0, r4
+ 544 00c6 FFF7FEFF 		bl	HAL_GPIO_WritePin
+ 545              	.LVL67:
+ 183:Core/Src/ads1299.c **** 
+ 184:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_RDATAC, 1);
+ 546              		.loc 1 184 5 view .LVU121
+ 547 00ca 0121     		movs	r1, #1
+ 548 00cc 1020     		movs	r0, #16
+ 549 00ce FFF7FEFF 		bl	ads1299_send_cmd
+ 550              	.LVL68:
+ 185:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_RDATAC, 2);
+ 551              		.loc 1 185 5 view .LVU122
+ 552 00d2 0221     		movs	r1, #2
+ 553 00d4 1020     		movs	r0, #16
+ 554 00d6 FFF7FEFF 		bl	ads1299_send_cmd
+ 555              	.LVL69:
+ 186:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_RDATAC, 3);
+ 556              		.loc 1 186 5 view .LVU123
+ 557 00da 0321     		movs	r1, #3
+ 558 00dc 1020     		movs	r0, #16
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 14
+
+
+ 559 00de FFF7FEFF 		bl	ads1299_send_cmd
+ 560              	.LVL70:
+ 187:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_RDATAC, 4);
+ 561              		.loc 1 187 5 view .LVU124
+ 562 00e2 0421     		movs	r1, #4
+ 563 00e4 1020     		movs	r0, #16
+ 564 00e6 FFF7FEFF 		bl	ads1299_send_cmd
+ 565              	.LVL71:
+ 188:Core/Src/ads1299.c ****     ads1299_send_cmd(ADS1299_RDATAC, 5);
+ 566              		.loc 1 188 5 view .LVU125
+ 567 00ea 0521     		movs	r1, #5
+ 568 00ec 1020     		movs	r0, #16
+ 569 00ee FFF7FEFF 		bl	ads1299_send_cmd
+ 570              	.LVL72:
+ 189:Core/Src/ads1299.c **** }
+ 571              		.loc 1 189 1 is_stmt 0 view .LVU126
+ 572 00f2 10BD     		pop	{r4, pc}
+ 573              	.L28:
+ 574              		.align	2
+ 575              	.L27:
+ 576 00f4 001C0258 		.word	1476533248
+ 577              		.cfi_endproc
+ 578              	.LFE153:
+ 580              		.section	.text.ads1299_all_reg_read,"ax",%progbits
+ 581              		.align	1
+ 582              		.global	ads1299_all_reg_read
+ 583              		.syntax unified
+ 584              		.thumb
+ 585              		.thumb_func
+ 587              	ads1299_all_reg_read:
+ 588              	.LVL73:
+ 589              	.LFB154:
+ 190:Core/Src/ads1299.c **** 
+ 191:Core/Src/ads1299.c **** // 读取指定1299的所有寄存器
+ 192:Core/Src/ads1299.c **** void ads1299_all_reg_read(int chip)
+ 193:Core/Src/ads1299.c **** {
+ 590              		.loc 1 193 1 is_stmt 1 view -0
+ 591              		.cfi_startproc
+ 592              		@ args = 0, pretend = 0, frame = 56
+ 593              		@ frame_needed = 0, uses_anonymous_args = 0
+ 594              		.loc 1 193 1 is_stmt 0 view .LVU128
+ 595 0000 10B5     		push	{r4, lr}
+ 596              		.cfi_def_cfa_offset 8
+ 597              		.cfi_offset 4, -8
+ 598              		.cfi_offset 14, -4
+ 599 0002 90B0     		sub	sp, sp, #64
+ 600              		.cfi_def_cfa_offset 72
+ 601 0004 0446     		mov	r4, r0
+ 194:Core/Src/ads1299.c ****     uint8_t data_send[26] = {0};
+ 602              		.loc 1 194 5 is_stmt 1 view .LVU129
+ 603              		.loc 1 194 13 is_stmt 0 view .LVU130
+ 604 0006 0023     		movs	r3, #0
+ 605 0008 0993     		str	r3, [sp, #36]
+ 606 000a 0A93     		str	r3, [sp, #40]
+ 607 000c 0B93     		str	r3, [sp, #44]
+ 608 000e 0C93     		str	r3, [sp, #48]
+ 609 0010 0D93     		str	r3, [sp, #52]
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 15
+
+
+ 610 0012 0E93     		str	r3, [sp, #56]
+ 611 0014 ADF83C30 		strh	r3, [sp, #60]	@ movhi
+ 195:Core/Src/ads1299.c ****     uint8_t reg_buffer[26];
+ 612              		.loc 1 195 5 is_stmt 1 view .LVU131
+ 196:Core/Src/ads1299.c ****     data_send[0] = 0x00 | ADS1299_RREG;
+ 613              		.loc 1 196 5 view .LVU132
+ 614              		.loc 1 196 18 is_stmt 0 view .LVU133
+ 615 0018 2023     		movs	r3, #32
+ 616 001a 8DF82430 		strb	r3, [sp, #36]
+ 197:Core/Src/ads1299.c ****     data_send[1] = 0x17;
+ 617              		.loc 1 197 5 is_stmt 1 view .LVU134
+ 618              		.loc 1 197 18 is_stmt 0 view .LVU135
+ 619 001e 1723     		movs	r3, #23
+ 620 0020 8DF82530 		strb	r3, [sp, #37]
+ 198:Core/Src/ads1299.c ****     CS_LOW(chip);
+ 621              		.loc 1 198 5 is_stmt 1 view .LVU136
+ 622 0024 FFF7FEFF 		bl	CS_LOW
+ 623              	.LVL74:
+ 199:Core/Src/ads1299.c ****     HAL_SPI_TransmitReceive(&hspi3, data_send, reg_buffer, 26, 100);
+ 624              		.loc 1 199 5 view .LVU137
+ 625 0028 6423     		movs	r3, #100
+ 626 002a 0093     		str	r3, [sp]
+ 627 002c 1A23     		movs	r3, #26
+ 628 002e 02AA     		add	r2, sp, #8
+ 629 0030 09A9     		add	r1, sp, #36
+ 630 0032 0848     		ldr	r0, .L31
+ 631 0034 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 632              	.LVL75:
+ 200:Core/Src/ads1299.c ****     HAL_Delay(1);
+ 633              		.loc 1 200 5 view .LVU138
+ 634 0038 0120     		movs	r0, #1
+ 635 003a FFF7FEFF 		bl	HAL_Delay
+ 636              	.LVL76:
+ 201:Core/Src/ads1299.c ****     CS_HIGH(chip);
+ 637              		.loc 1 201 5 view .LVU139
+ 638 003e 2046     		mov	r0, r4
+ 639 0040 FFF7FEFF 		bl	CS_HIGH
+ 640              	.LVL77:
+ 202:Core/Src/ads1299.c ****     USBD_CUSTOM_HID_SendReport_HS(reg_buffer + 2, 24);
+ 641              		.loc 1 202 5 view .LVU140
+ 642 0044 1821     		movs	r1, #24
+ 643 0046 0DF10A00 		add	r0, sp, #10
+ 644 004a FFF7FEFF 		bl	USBD_CUSTOM_HID_SendReport_HS
+ 645              	.LVL78:
+ 203:Core/Src/ads1299.c **** }
+ 646              		.loc 1 203 1 is_stmt 0 view .LVU141
+ 647 004e 10B0     		add	sp, sp, #64
+ 648              		.cfi_def_cfa_offset 8
+ 649              		@ sp needed
+ 650 0050 10BD     		pop	{r4, pc}
+ 651              	.LVL79:
+ 652              	.L32:
+ 653              		.loc 1 203 1 view .LVU142
+ 654 0052 00BF     		.align	2
+ 655              	.L31:
+ 656 0054 00000000 		.word	hspi3
+ 657              		.cfi_endproc
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 16
+
+
+ 658              	.LFE154:
+ 660              		.section	.text.all_ads1299_reg_read,"ax",%progbits
+ 661              		.align	1
+ 662              		.global	all_ads1299_reg_read
+ 663              		.syntax unified
+ 664              		.thumb
+ 665              		.thumb_func
+ 667              	all_ads1299_reg_read:
+ 668              	.LFB155:
+ 204:Core/Src/ads1299.c **** 
+ 205:Core/Src/ads1299.c **** // 读取所有1299的所有寄存器
+ 206:Core/Src/ads1299.c **** void all_ads1299_reg_read(void)
+ 207:Core/Src/ads1299.c **** {
+ 669              		.loc 1 207 1 is_stmt 1 view -0
+ 670              		.cfi_startproc
+ 671              		@ args = 0, pretend = 0, frame = 152
+ 672              		@ frame_needed = 0, uses_anonymous_args = 0
+ 673 0000 30B5     		push	{r4, r5, lr}
+ 674              		.cfi_def_cfa_offset 12
+ 675              		.cfi_offset 4, -12
+ 676              		.cfi_offset 5, -8
+ 677              		.cfi_offset 14, -4
+ 678 0002 A9B0     		sub	sp, sp, #164
+ 679              		.cfi_def_cfa_offset 176
+ 208:Core/Src/ads1299.c ****     uint8_t data_send[26] = {0};
+ 680              		.loc 1 208 5 view .LVU144
+ 681              		.loc 1 208 13 is_stmt 0 view .LVU145
+ 682 0004 0021     		movs	r1, #0
+ 683 0006 2191     		str	r1, [sp, #132]
+ 684 0008 2291     		str	r1, [sp, #136]
+ 685 000a 2391     		str	r1, [sp, #140]
+ 686 000c 2491     		str	r1, [sp, #144]
+ 687 000e 2591     		str	r1, [sp, #148]
+ 688 0010 2691     		str	r1, [sp, #152]
+ 689 0012 ADF89C10 		strh	r1, [sp, #156]	@ movhi
+ 209:Core/Src/ads1299.c ****     uint8_t reg_buffer[120] = {0};
+ 690              		.loc 1 209 5 is_stmt 1 view .LVU146
+ 691              		.loc 1 209 13 is_stmt 0 view .LVU147
+ 692 0016 0391     		str	r1, [sp, #12]
+ 693 0018 7422     		movs	r2, #116
+ 694 001a 04A8     		add	r0, sp, #16
+ 695 001c FFF7FEFF 		bl	memset
+ 696              	.LVL80:
+ 210:Core/Src/ads1299.c ****     data_send[0] = 0x00 | ADS1299_RREG;
+ 697              		.loc 1 210 5 is_stmt 1 view .LVU148
+ 698              		.loc 1 210 18 is_stmt 0 view .LVU149
+ 699 0020 2023     		movs	r3, #32
+ 700 0022 8DF88430 		strb	r3, [sp, #132]
+ 211:Core/Src/ads1299.c ****     data_send[1] = 0x17;
+ 701              		.loc 1 211 5 is_stmt 1 view .LVU150
+ 702              		.loc 1 211 18 is_stmt 0 view .LVU151
+ 703 0026 1723     		movs	r3, #23
+ 704 0028 8DF88530 		strb	r3, [sp, #133]
+ 212:Core/Src/ads1299.c **** 
+ 213:Core/Src/ads1299.c ****     CS_LOW(1);
+ 705              		.loc 1 213 5 is_stmt 1 view .LVU152
+ 706 002c 0120     		movs	r0, #1
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 17
+
+
+ 707 002e FFF7FEFF 		bl	CS_LOW
+ 708              	.LVL81:
+ 214:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 2, 100);
+ 709              		.loc 1 214 5 view .LVU153
+ 710 0032 324C     		ldr	r4, .L35
+ 711 0034 6423     		movs	r3, #100
+ 712 0036 0222     		movs	r2, #2
+ 713 0038 21A9     		add	r1, sp, #132
+ 714 003a 2046     		mov	r0, r4
+ 715 003c FFF7FEFF 		bl	HAL_SPI_Transmit
+ 716              	.LVL82:
+ 215:Core/Src/ads1299.c ****     HAL_SPI_TransmitReceive(&hspi3, data_send, reg_buffer, 24, 100);
+ 717              		.loc 1 215 5 view .LVU154
+ 718 0040 6425     		movs	r5, #100
+ 719 0042 0095     		str	r5, [sp]
+ 720 0044 1823     		movs	r3, #24
+ 721 0046 03AA     		add	r2, sp, #12
+ 722 0048 21A9     		add	r1, sp, #132
+ 723 004a 2046     		mov	r0, r4
+ 724 004c FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 725              	.LVL83:
+ 216:Core/Src/ads1299.c ****     CS_HIGH(1);
+ 726              		.loc 1 216 5 view .LVU155
+ 727 0050 0120     		movs	r0, #1
+ 728 0052 FFF7FEFF 		bl	CS_HIGH
+ 729              	.LVL84:
+ 217:Core/Src/ads1299.c **** 
+ 218:Core/Src/ads1299.c ****     CS_LOW(2);
+ 730              		.loc 1 218 5 view .LVU156
+ 731 0056 0220     		movs	r0, #2
+ 732 0058 FFF7FEFF 		bl	CS_LOW
+ 733              	.LVL85:
+ 219:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 2, 100);
+ 734              		.loc 1 219 5 view .LVU157
+ 735 005c 2B46     		mov	r3, r5
+ 736 005e 0222     		movs	r2, #2
+ 737 0060 21A9     		add	r1, sp, #132
+ 738 0062 2046     		mov	r0, r4
+ 739 0064 FFF7FEFF 		bl	HAL_SPI_Transmit
+ 740              	.LVL86:
+ 220:Core/Src/ads1299.c ****     HAL_SPI_TransmitReceive(&hspi3, data_send, reg_buffer + 24, 24, 100);
+ 741              		.loc 1 220 5 view .LVU158
+ 742 0068 0095     		str	r5, [sp]
+ 743 006a 1823     		movs	r3, #24
+ 744 006c 09AA     		add	r2, sp, #36
+ 745 006e 21A9     		add	r1, sp, #132
+ 746 0070 2046     		mov	r0, r4
+ 747 0072 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 748              	.LVL87:
+ 221:Core/Src/ads1299.c ****     CS_HIGH(2);
+ 749              		.loc 1 221 5 view .LVU159
+ 750 0076 0220     		movs	r0, #2
+ 751 0078 FFF7FEFF 		bl	CS_HIGH
+ 752              	.LVL88:
+ 222:Core/Src/ads1299.c **** 
+ 223:Core/Src/ads1299.c ****     CS_LOW(3);
+ 753              		.loc 1 223 5 view .LVU160
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 18
+
+
+ 754 007c 0320     		movs	r0, #3
+ 755 007e FFF7FEFF 		bl	CS_LOW
+ 756              	.LVL89:
+ 224:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 2, 100);
+ 757              		.loc 1 224 5 view .LVU161
+ 758 0082 2B46     		mov	r3, r5
+ 759 0084 0222     		movs	r2, #2
+ 760 0086 21A9     		add	r1, sp, #132
+ 761 0088 2046     		mov	r0, r4
+ 762 008a FFF7FEFF 		bl	HAL_SPI_Transmit
+ 763              	.LVL90:
+ 225:Core/Src/ads1299.c ****     HAL_SPI_TransmitReceive(&hspi3, data_send, reg_buffer + 48, 24, 100);
+ 764              		.loc 1 225 5 view .LVU162
+ 765 008e 0095     		str	r5, [sp]
+ 766 0090 1823     		movs	r3, #24
+ 767 0092 0FAA     		add	r2, sp, #60
+ 768 0094 21A9     		add	r1, sp, #132
+ 769 0096 2046     		mov	r0, r4
+ 770 0098 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 771              	.LVL91:
+ 226:Core/Src/ads1299.c ****     CS_HIGH(3);
+ 772              		.loc 1 226 5 view .LVU163
+ 773 009c 0320     		movs	r0, #3
+ 774 009e FFF7FEFF 		bl	CS_HIGH
+ 775              	.LVL92:
+ 227:Core/Src/ads1299.c **** 
+ 228:Core/Src/ads1299.c ****     CS_LOW(4);
+ 776              		.loc 1 228 5 view .LVU164
+ 777 00a2 0420     		movs	r0, #4
+ 778 00a4 FFF7FEFF 		bl	CS_LOW
+ 779              	.LVL93:
+ 229:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 2, 100);
+ 780              		.loc 1 229 5 view .LVU165
+ 781 00a8 2B46     		mov	r3, r5
+ 782 00aa 0222     		movs	r2, #2
+ 783 00ac 21A9     		add	r1, sp, #132
+ 784 00ae 2046     		mov	r0, r4
+ 785 00b0 FFF7FEFF 		bl	HAL_SPI_Transmit
+ 786              	.LVL94:
+ 230:Core/Src/ads1299.c ****     HAL_SPI_TransmitReceive(&hspi3, data_send, reg_buffer + 72, 24, 100);
+ 787              		.loc 1 230 5 view .LVU166
+ 788 00b4 0095     		str	r5, [sp]
+ 789 00b6 1823     		movs	r3, #24
+ 790 00b8 15AA     		add	r2, sp, #84
+ 791 00ba 21A9     		add	r1, sp, #132
+ 792 00bc 2046     		mov	r0, r4
+ 793 00be FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 794              	.LVL95:
+ 231:Core/Src/ads1299.c ****     CS_HIGH(4);
+ 795              		.loc 1 231 5 view .LVU167
+ 796 00c2 0420     		movs	r0, #4
+ 797 00c4 FFF7FEFF 		bl	CS_HIGH
+ 798              	.LVL96:
+ 232:Core/Src/ads1299.c **** 
+ 233:Core/Src/ads1299.c ****     CS_LOW(5);
+ 799              		.loc 1 233 5 view .LVU168
+ 800 00c8 0520     		movs	r0, #5
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 19
+
+
+ 801 00ca FFF7FEFF 		bl	CS_LOW
+ 802              	.LVL97:
+ 234:Core/Src/ads1299.c ****     HAL_SPI_Transmit(&hspi3, data_send, 2, 100);
+ 803              		.loc 1 234 5 view .LVU169
+ 804 00ce 2B46     		mov	r3, r5
+ 805 00d0 0222     		movs	r2, #2
+ 806 00d2 21A9     		add	r1, sp, #132
+ 807 00d4 2046     		mov	r0, r4
+ 808 00d6 FFF7FEFF 		bl	HAL_SPI_Transmit
+ 809              	.LVL98:
+ 235:Core/Src/ads1299.c ****     HAL_SPI_TransmitReceive(&hspi3, data_send, reg_buffer + 96, 24, 100);
+ 810              		.loc 1 235 5 view .LVU170
+ 811 00da 0095     		str	r5, [sp]
+ 812 00dc 1823     		movs	r3, #24
+ 813 00de 1BAA     		add	r2, sp, #108
+ 814 00e0 21A9     		add	r1, sp, #132
+ 815 00e2 2046     		mov	r0, r4
+ 816 00e4 FFF7FEFF 		bl	HAL_SPI_TransmitReceive
+ 817              	.LVL99:
+ 236:Core/Src/ads1299.c ****     CS_HIGH(5);
+ 818              		.loc 1 236 5 view .LVU171
+ 819 00e8 0520     		movs	r0, #5
+ 820 00ea FFF7FEFF 		bl	CS_HIGH
+ 821              	.LVL100:
+ 237:Core/Src/ads1299.c **** 
+ 238:Core/Src/ads1299.c ****     USBD_CUSTOM_HID_SendReport_HS(reg_buffer, 120);
+ 822              		.loc 1 238 5 view .LVU172
+ 823 00ee 7821     		movs	r1, #120
+ 824 00f0 03A8     		add	r0, sp, #12
+ 825 00f2 FFF7FEFF 		bl	USBD_CUSTOM_HID_SendReport_HS
+ 826              	.LVL101:
+ 239:Core/Src/ads1299.c **** }
+ 827              		.loc 1 239 1 is_stmt 0 view .LVU173
+ 828 00f6 29B0     		add	sp, sp, #164
+ 829              		.cfi_def_cfa_offset 12
+ 830              		@ sp needed
+ 831 00f8 30BD     		pop	{r4, r5, pc}
+ 832              	.L36:
+ 833 00fa 00BF     		.align	2
+ 834              	.L35:
+ 835 00fc 00000000 		.word	hspi3
+ 836              		.cfi_endproc
+ 837              	.LFE155:
+ 839              		.section	.text.calcCRC,"ax",%progbits
+ 840              		.align	1
+ 841              		.global	calcCRC
+ 842              		.syntax unified
+ 843              		.thumb
+ 844              		.thumb_func
+ 846              	calcCRC:
+ 847              	.LVL102:
+ 848              	.LFB156:
+ 240:Core/Src/ads1299.c **** 
+ 241:Core/Src/ads1299.c **** // 按照 X^8+X^2+X^1+1 生成
+ 242:Core/Src/ads1299.c **** static const unsigned int crc8Table[256] =
+ 243:Core/Src/ads1299.c ****     {
+ 244:Core/Src/ads1299.c ****         0x00, 0x07, 0x0E, 0x09, 0x1C, 0x1B, 0x12, 0x15, 0x38, 0x3F, 0x36, 0x31, 0x24, 0x23, 0x2A, 0
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 20
+
+
+ 245:Core/Src/ads1299.c ****         0x70, 0x77, 0x7E, 0x79, 0x6C, 0x6B, 0x62, 0x65, 0x48, 0x4F, 0x46, 0x41, 0x54, 0x53, 0x5A, 0
+ 246:Core/Src/ads1299.c ****         0xE0, 0xE7, 0xEE, 0xE9, 0xFC, 0xFB, 0xF2, 0xF5, 0xD8, 0xDF, 0xD6, 0xD1, 0xC4, 0xC3, 0xCA, 0
+ 247:Core/Src/ads1299.c ****         0x90, 0x97, 0x9E, 0x99, 0x8C, 0x8B, 0x82, 0x85, 0xA8, 0xAF, 0xA6, 0xA1, 0xB4, 0xB3, 0xBA, 0
+ 248:Core/Src/ads1299.c ****         0xC7, 0xC0, 0xC9, 0xCE, 0xDB, 0xDC, 0xD5, 0xD2, 0xFF, 0xF8, 0xF1, 0xF6, 0xE3, 0xE4, 0xED, 0
+ 249:Core/Src/ads1299.c ****         0xB7, 0xB0, 0xB9, 0xBE, 0xAB, 0xAC, 0xA5, 0xA2, 0x8F, 0x88, 0x81, 0x86, 0x93, 0x94, 0x9D, 0
+ 250:Core/Src/ads1299.c ****         0x27, 0x20, 0x29, 0x2E, 0x3B, 0x3C, 0x35, 0x32, 0x1F, 0x18, 0x11, 0x16, 0x03, 0x04, 0x0D, 0
+ 251:Core/Src/ads1299.c ****         0x57, 0x50, 0x59, 0x5E, 0x4B, 0x4C, 0x45, 0x42, 0x6F, 0x68, 0x61, 0x66, 0x73, 0x74, 0x7D, 0
+ 252:Core/Src/ads1299.c ****         0x89, 0x8E, 0x87, 0x80, 0x95, 0x92, 0x9B, 0x9C, 0xB1, 0xB6, 0xBF, 0xB8, 0xAD, 0xAA, 0xA3, 0
+ 253:Core/Src/ads1299.c ****         0xF9, 0xFE, 0xF7, 0xF0, 0xE5, 0xE2, 0xEB, 0xEC, 0xC1, 0xC6, 0xCF, 0xC8, 0xDD, 0xDA, 0xD3, 0
+ 254:Core/Src/ads1299.c ****         0x69, 0x6E, 0x67, 0x60, 0x75, 0x72, 0x7B, 0x7C, 0x51, 0x56, 0x5F, 0x58, 0x4D, 0x4A, 0x43, 0
+ 255:Core/Src/ads1299.c ****         0x19, 0x1E, 0x17, 0x10, 0x05, 0x02, 0x0B, 0x0C, 0x21, 0x26, 0x2F, 0x28, 0x3D, 0x3A, 0x33, 0
+ 256:Core/Src/ads1299.c ****         0x4E, 0x49, 0x40, 0x47, 0x52, 0x55, 0x5C, 0x5B, 0x76, 0x71, 0x78, 0x7F, 0x6A, 0x6D, 0x64, 0
+ 257:Core/Src/ads1299.c ****         0x3E, 0x39, 0x30, 0x37, 0x22, 0x25, 0x2C, 0x2B, 0x06, 0x01, 0x08, 0x0F, 0x1A, 0x1D, 0x14, 0
+ 258:Core/Src/ads1299.c ****         0xAE, 0xA9, 0xA0, 0xA7, 0xB2, 0xB5, 0xBC, 0xBB, 0x96, 0x91, 0x98, 0x9F, 0x8A, 0x8D, 0x84, 0
+ 259:Core/Src/ads1299.c ****         0xDE, 0xD9, 0xD0, 0xD7, 0xC2, 0xC5, 0xCC, 0xCB, 0xE6, 0xE1, 0xE8, 0xEF, 0xFA, 0xFD, 0xF4, 0
+ 260:Core/Src/ads1299.c **** 
+ 261:Core/Src/ads1299.c **** // 计算CRC
+ 262:Core/Src/ads1299.c **** uint8_t calcCRC(uint8_t *data, unsigned int len)
+ 263:Core/Src/ads1299.c **** {
+ 849              		.loc 1 263 1 is_stmt 1 view -0
+ 850              		.cfi_startproc
+ 851              		@ args = 0, pretend = 0, frame = 0
+ 852              		@ frame_needed = 0, uses_anonymous_args = 0
+ 853              		@ link register save eliminated.
+ 854              		.loc 1 263 1 is_stmt 0 view .LVU175
+ 855 0000 0346     		mov	r3, r0
+ 264:Core/Src/ads1299.c ****     unsigned char crc8 = 0;
+ 856              		.loc 1 264 5 is_stmt 1 view .LVU176
+ 857              	.LVL103:
+ 265:Core/Src/ads1299.c ****     while (len--)
+ 858              		.loc 1 265 5 view .LVU177
+ 264:Core/Src/ads1299.c ****     unsigned char crc8 = 0;
+ 859              		.loc 1 264 19 is_stmt 0 view .LVU178
+ 860 0002 0020     		movs	r0, #0
+ 861              	.LVL104:
+ 862              		.loc 1 265 11 view .LVU179
+ 863 0004 06E0     		b	.L38
+ 864              	.LVL105:
+ 865              	.L39:
+ 266:Core/Src/ads1299.c ****     {
+ 267:Core/Src/ads1299.c ****         crc8 = crc8 ^ (*data++);
+ 866              		.loc 1 267 9 is_stmt 1 view .LVU180
+ 867              		.loc 1 267 24 is_stmt 0 view .LVU181
+ 868 0006 13F8012B 		ldrb	r2, [r3], #1	@ zero_extendqisi2
+ 869              	.LVL106:
+ 870              		.loc 1 267 14 view .LVU182
+ 871 000a 4240     		eors	r2, r2, r0
+ 872              	.LVL107:
+ 268:Core/Src/ads1299.c ****         crc8 = crc8Table[crc8];
+ 873              		.loc 1 268 9 is_stmt 1 view .LVU183
+ 874              		.loc 1 268 14 is_stmt 0 view .LVU184
+ 875 000c 0449     		ldr	r1, .L40
+ 876 000e 11F82200 		ldrb	r0, [r1, r2, lsl #2]	@ zero_extendqisi2
+ 877              	.LVL108:
+ 265:Core/Src/ads1299.c ****     while (len--)
+ 878              		.loc 1 265 15 view .LVU185
+ 879 0012 6146     		mov	r1, ip
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 21
+
+
+ 880              	.LVL109:
+ 881              	.L38:
+ 265:Core/Src/ads1299.c ****     while (len--)
+ 882              		.loc 1 265 11 is_stmt 1 view .LVU186
+ 265:Core/Src/ads1299.c ****     while (len--)
+ 883              		.loc 1 265 15 is_stmt 0 view .LVU187
+ 884 0014 01F1FF3C 		add	ip, r1, #-1
+ 885              	.LVL110:
+ 265:Core/Src/ads1299.c ****     while (len--)
+ 886              		.loc 1 265 11 view .LVU188
+ 887 0018 0029     		cmp	r1, #0
+ 888 001a F4D1     		bne	.L39
+ 269:Core/Src/ads1299.c ****     }
+ 270:Core/Src/ads1299.c ****     return crc8;
+ 889              		.loc 1 270 5 is_stmt 1 view .LVU189
+ 271:Core/Src/ads1299.c **** }
+ 890              		.loc 1 271 1 is_stmt 0 view .LVU190
+ 891 001c 7047     		bx	lr
+ 892              	.L41:
+ 893 001e 00BF     		.align	2
+ 894              	.L40:
+ 895 0020 00000000 		.word	.LANCHOR2
+ 896              		.cfi_endproc
+ 897              	.LFE156:
+ 899              		.global	ADS1x9x_Default_Register_Settings_2_5
+ 900              		.global	ADS1x9x_Default_Register_Settings_1
+ 901              		.section	.data.ADS1x9x_Default_Register_Settings_1,"aw"
+ 902              		.align	2
+ 903              		.set	.LANCHOR0,. + 0
+ 906              	ADS1x9x_Default_Register_Settings_1:
+ 907 0000 00F4D4EE 		.ascii	"\000\364\324\356\007````````\377\377\377\377\000\000"
+ 907      07606060 
+ 907      60606060 
+ 907      60FFFFFF 
+ 907      FF0000
+ 908 0013 00000000 		.ascii	"\000\000\000\000\000"
+ 908      00
+ 909              		.section	.data.ADS1x9x_Default_Register_Settings_2_5,"aw"
+ 910              		.align	2
+ 911              		.set	.LANCHOR1,. + 0
+ 914              	ADS1x9x_Default_Register_Settings_2_5:
+ 915 0000 00D4D4E0 		.ascii	"\000\324\324\340\007````````\377\377\377\377\000\000"
+ 915      07606060 
+ 915      60606060 
+ 915      60FFFFFF 
+ 915      FF0000
+ 916 0013 00000000 		.ascii	"\000\000\000\000\000"
+ 916      00
+ 917              		.section	.rodata.crc8Table,"a"
+ 918              		.align	2
+ 919              		.set	.LANCHOR2,. + 0
+ 922              	crc8Table:
+ 923 0000 00000000 		.word	0
+ 924 0004 07000000 		.word	7
+ 925 0008 0E000000 		.word	14
+ 926 000c 09000000 		.word	9
+ 927 0010 1C000000 		.word	28
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 22
+
+
+ 928 0014 1B000000 		.word	27
+ 929 0018 12000000 		.word	18
+ 930 001c 15000000 		.word	21
+ 931 0020 38000000 		.word	56
+ 932 0024 3F000000 		.word	63
+ 933 0028 36000000 		.word	54
+ 934 002c 31000000 		.word	49
+ 935 0030 24000000 		.word	36
+ 936 0034 23000000 		.word	35
+ 937 0038 2A000000 		.word	42
+ 938 003c 2D000000 		.word	45
+ 939 0040 70000000 		.word	112
+ 940 0044 77000000 		.word	119
+ 941 0048 7E000000 		.word	126
+ 942 004c 79000000 		.word	121
+ 943 0050 6C000000 		.word	108
+ 944 0054 6B000000 		.word	107
+ 945 0058 62000000 		.word	98
+ 946 005c 65000000 		.word	101
+ 947 0060 48000000 		.word	72
+ 948 0064 4F000000 		.word	79
+ 949 0068 46000000 		.word	70
+ 950 006c 41000000 		.word	65
+ 951 0070 54000000 		.word	84
+ 952 0074 53000000 		.word	83
+ 953 0078 5A000000 		.word	90
+ 954 007c 5D000000 		.word	93
+ 955 0080 E0000000 		.word	224
+ 956 0084 E7000000 		.word	231
+ 957 0088 EE000000 		.word	238
+ 958 008c E9000000 		.word	233
+ 959 0090 FC000000 		.word	252
+ 960 0094 FB000000 		.word	251
+ 961 0098 F2000000 		.word	242
+ 962 009c F5000000 		.word	245
+ 963 00a0 D8000000 		.word	216
+ 964 00a4 DF000000 		.word	223
+ 965 00a8 D6000000 		.word	214
+ 966 00ac D1000000 		.word	209
+ 967 00b0 C4000000 		.word	196
+ 968 00b4 C3000000 		.word	195
+ 969 00b8 CA000000 		.word	202
+ 970 00bc CD000000 		.word	205
+ 971 00c0 90000000 		.word	144
+ 972 00c4 97000000 		.word	151
+ 973 00c8 9E000000 		.word	158
+ 974 00cc 99000000 		.word	153
+ 975 00d0 8C000000 		.word	140
+ 976 00d4 8B000000 		.word	139
+ 977 00d8 82000000 		.word	130
+ 978 00dc 85000000 		.word	133
+ 979 00e0 A8000000 		.word	168
+ 980 00e4 AF000000 		.word	175
+ 981 00e8 A6000000 		.word	166
+ 982 00ec A1000000 		.word	161
+ 983 00f0 B4000000 		.word	180
+ 984 00f4 B3000000 		.word	179
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 23
+
+
+ 985 00f8 BA000000 		.word	186
+ 986 00fc BD000000 		.word	189
+ 987 0100 C7000000 		.word	199
+ 988 0104 C0000000 		.word	192
+ 989 0108 C9000000 		.word	201
+ 990 010c CE000000 		.word	206
+ 991 0110 DB000000 		.word	219
+ 992 0114 DC000000 		.word	220
+ 993 0118 D5000000 		.word	213
+ 994 011c D2000000 		.word	210
+ 995 0120 FF000000 		.word	255
+ 996 0124 F8000000 		.word	248
+ 997 0128 F1000000 		.word	241
+ 998 012c F6000000 		.word	246
+ 999 0130 E3000000 		.word	227
+ 1000 0134 E4000000 		.word	228
+ 1001 0138 ED000000 		.word	237
+ 1002 013c EA000000 		.word	234
+ 1003 0140 B7000000 		.word	183
+ 1004 0144 B0000000 		.word	176
+ 1005 0148 B9000000 		.word	185
+ 1006 014c BE000000 		.word	190
+ 1007 0150 AB000000 		.word	171
+ 1008 0154 AC000000 		.word	172
+ 1009 0158 A5000000 		.word	165
+ 1010 015c A2000000 		.word	162
+ 1011 0160 8F000000 		.word	143
+ 1012 0164 88000000 		.word	136
+ 1013 0168 81000000 		.word	129
+ 1014 016c 86000000 		.word	134
+ 1015 0170 93000000 		.word	147
+ 1016 0174 94000000 		.word	148
+ 1017 0178 9D000000 		.word	157
+ 1018 017c 9A000000 		.word	154
+ 1019 0180 27000000 		.word	39
+ 1020 0184 20000000 		.word	32
+ 1021 0188 29000000 		.word	41
+ 1022 018c 2E000000 		.word	46
+ 1023 0190 3B000000 		.word	59
+ 1024 0194 3C000000 		.word	60
+ 1025 0198 35000000 		.word	53
+ 1026 019c 32000000 		.word	50
+ 1027 01a0 1F000000 		.word	31
+ 1028 01a4 18000000 		.word	24
+ 1029 01a8 11000000 		.word	17
+ 1030 01ac 16000000 		.word	22
+ 1031 01b0 03000000 		.word	3
+ 1032 01b4 04000000 		.word	4
+ 1033 01b8 0D000000 		.word	13
+ 1034 01bc 0A000000 		.word	10
+ 1035 01c0 57000000 		.word	87
+ 1036 01c4 50000000 		.word	80
+ 1037 01c8 59000000 		.word	89
+ 1038 01cc 5E000000 		.word	94
+ 1039 01d0 4B000000 		.word	75
+ 1040 01d4 4C000000 		.word	76
+ 1041 01d8 45000000 		.word	69
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 24
+
+
+ 1042 01dc 42000000 		.word	66
+ 1043 01e0 6F000000 		.word	111
+ 1044 01e4 68000000 		.word	104
+ 1045 01e8 61000000 		.word	97
+ 1046 01ec 66000000 		.word	102
+ 1047 01f0 73000000 		.word	115
+ 1048 01f4 74000000 		.word	116
+ 1049 01f8 7D000000 		.word	125
+ 1050 01fc 7A000000 		.word	122
+ 1051 0200 89000000 		.word	137
+ 1052 0204 8E000000 		.word	142
+ 1053 0208 87000000 		.word	135
+ 1054 020c 80000000 		.word	128
+ 1055 0210 95000000 		.word	149
+ 1056 0214 92000000 		.word	146
+ 1057 0218 9B000000 		.word	155
+ 1058 021c 9C000000 		.word	156
+ 1059 0220 B1000000 		.word	177
+ 1060 0224 B6000000 		.word	182
+ 1061 0228 BF000000 		.word	191
+ 1062 022c B8000000 		.word	184
+ 1063 0230 AD000000 		.word	173
+ 1064 0234 AA000000 		.word	170
+ 1065 0238 A3000000 		.word	163
+ 1066 023c A4000000 		.word	164
+ 1067 0240 F9000000 		.word	249
+ 1068 0244 FE000000 		.word	254
+ 1069 0248 F7000000 		.word	247
+ 1070 024c F0000000 		.word	240
+ 1071 0250 E5000000 		.word	229
+ 1072 0254 E2000000 		.word	226
+ 1073 0258 EB000000 		.word	235
+ 1074 025c EC000000 		.word	236
+ 1075 0260 C1000000 		.word	193
+ 1076 0264 C6000000 		.word	198
+ 1077 0268 CF000000 		.word	207
+ 1078 026c C8000000 		.word	200
+ 1079 0270 DD000000 		.word	221
+ 1080 0274 DA000000 		.word	218
+ 1081 0278 D3000000 		.word	211
+ 1082 027c D4000000 		.word	212
+ 1083 0280 69000000 		.word	105
+ 1084 0284 6E000000 		.word	110
+ 1085 0288 67000000 		.word	103
+ 1086 028c 60000000 		.word	96
+ 1087 0290 75000000 		.word	117
+ 1088 0294 72000000 		.word	114
+ 1089 0298 7B000000 		.word	123
+ 1090 029c 7C000000 		.word	124
+ 1091 02a0 51000000 		.word	81
+ 1092 02a4 56000000 		.word	86
+ 1093 02a8 5F000000 		.word	95
+ 1094 02ac 58000000 		.word	88
+ 1095 02b0 4D000000 		.word	77
+ 1096 02b4 4A000000 		.word	74
+ 1097 02b8 43000000 		.word	67
+ 1098 02bc 44000000 		.word	68
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 25
+
+
+ 1099 02c0 19000000 		.word	25
+ 1100 02c4 1E000000 		.word	30
+ 1101 02c8 17000000 		.word	23
+ 1102 02cc 10000000 		.word	16
+ 1103 02d0 05000000 		.word	5
+ 1104 02d4 02000000 		.word	2
+ 1105 02d8 0B000000 		.word	11
+ 1106 02dc 0C000000 		.word	12
+ 1107 02e0 21000000 		.word	33
+ 1108 02e4 26000000 		.word	38
+ 1109 02e8 2F000000 		.word	47
+ 1110 02ec 28000000 		.word	40
+ 1111 02f0 3D000000 		.word	61
+ 1112 02f4 3A000000 		.word	58
+ 1113 02f8 33000000 		.word	51
+ 1114 02fc 34000000 		.word	52
+ 1115 0300 4E000000 		.word	78
+ 1116 0304 49000000 		.word	73
+ 1117 0308 40000000 		.word	64
+ 1118 030c 47000000 		.word	71
+ 1119 0310 52000000 		.word	82
+ 1120 0314 55000000 		.word	85
+ 1121 0318 5C000000 		.word	92
+ 1122 031c 5B000000 		.word	91
+ 1123 0320 76000000 		.word	118
+ 1124 0324 71000000 		.word	113
+ 1125 0328 78000000 		.word	120
+ 1126 032c 7F000000 		.word	127
+ 1127 0330 6A000000 		.word	106
+ 1128 0334 6D000000 		.word	109
+ 1129 0338 64000000 		.word	100
+ 1130 033c 63000000 		.word	99
+ 1131 0340 3E000000 		.word	62
+ 1132 0344 39000000 		.word	57
+ 1133 0348 30000000 		.word	48
+ 1134 034c 37000000 		.word	55
+ 1135 0350 22000000 		.word	34
+ 1136 0354 25000000 		.word	37
+ 1137 0358 2C000000 		.word	44
+ 1138 035c 2B000000 		.word	43
+ 1139 0360 06000000 		.word	6
+ 1140 0364 01000000 		.word	1
+ 1141 0368 08000000 		.word	8
+ 1142 036c 0F000000 		.word	15
+ 1143 0370 1A000000 		.word	26
+ 1144 0374 1D000000 		.word	29
+ 1145 0378 14000000 		.word	20
+ 1146 037c 13000000 		.word	19
+ 1147 0380 AE000000 		.word	174
+ 1148 0384 A9000000 		.word	169
+ 1149 0388 A0000000 		.word	160
+ 1150 038c A7000000 		.word	167
+ 1151 0390 B2000000 		.word	178
+ 1152 0394 B5000000 		.word	181
+ 1153 0398 BC000000 		.word	188
+ 1154 039c BB000000 		.word	187
+ 1155 03a0 96000000 		.word	150
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 26
+
+
+ 1156 03a4 91000000 		.word	145
+ 1157 03a8 98000000 		.word	152
+ 1158 03ac 9F000000 		.word	159
+ 1159 03b0 8A000000 		.word	138
+ 1160 03b4 8D000000 		.word	141
+ 1161 03b8 84000000 		.word	132
+ 1162 03bc 83000000 		.word	131
+ 1163 03c0 DE000000 		.word	222
+ 1164 03c4 D9000000 		.word	217
+ 1165 03c8 D0000000 		.word	208
+ 1166 03cc D7000000 		.word	215
+ 1167 03d0 C2000000 		.word	194
+ 1168 03d4 C5000000 		.word	197
+ 1169 03d8 CC000000 		.word	204
+ 1170 03dc CB000000 		.word	203
+ 1171 03e0 E6000000 		.word	230
+ 1172 03e4 E1000000 		.word	225
+ 1173 03e8 E8000000 		.word	232
+ 1174 03ec EF000000 		.word	239
+ 1175 03f0 FA000000 		.word	250
+ 1176 03f4 FD000000 		.word	253
+ 1177 03f8 F4000000 		.word	244
+ 1178 03fc F3000000 		.word	243
+ 1179              		.text
+ 1180              	.Letext0:
+ 1181              		.file 2 "d:\\tool\\gcc-arm-none-eabi\\arm-none-eabi\\include\\machine\\_default_types.h"
+ 1182              		.file 3 "d:\\tool\\gcc-arm-none-eabi\\arm-none-eabi\\include\\sys\\_stdint.h"
+ 1183              		.file 4 "Drivers/CMSIS/Device/ST/STM32H7xx/Include/stm32h743xx.h"
+ 1184              		.file 5 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_def.h"
+ 1185              		.file 6 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_gpio.h"
+ 1186              		.file 7 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_dma.h"
+ 1187              		.file 8 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal_spi.h"
+ 1188              		.file 9 "Core/Inc/spi.h"
+ 1189              		.file 10 "Core/Inc/gpio.h"
+ 1190              		.file 11 "USB_DEVICE/App/usbd_custom_hid_if.h"
+ 1191              		.file 12 "Drivers/STM32H7xx_HAL_Driver/Inc/stm32h7xx_hal.h"
+ 1192              		.file 13 "<built-in>"
+ARM GAS  C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s 			page 27
+
+
+DEFINED SYMBOLS
+                            *ABS*:00000000 ads1299.c
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:19     .text.ads1299_reg_read:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:25     .text.ads1299_reg_read:00000000 ads1299_reg_read
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:90     .text.ads1299_reg_read:00000044 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:95     .text.ads1299_reg_write:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:101    .text.ads1299_reg_write:00000000 ads1299_reg_write
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:159    .text.ads1299_reg_write:0000003c $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:164    .text.ads1299_send_cmd:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:170    .text.ads1299_send_cmd:00000000 ads1299_send_cmd
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:217    .text.ads1299_send_cmd:00000030 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:222    .text.ads1299_all_reg_write_1:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:228    .text.ads1299_all_reg_write_1:00000000 ads1299_all_reg_write_1
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:310    .text.ads1299_all_reg_write_1:0000004c $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:316    .text.ads1299_all_reg_write_2_5:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:322    .text.ads1299_all_reg_write_2_5:00000000 ads1299_all_reg_write_2_5
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:412    .text.ads1299_all_reg_write_2_5:0000004c $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:418    .text.ads1299_check_init:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:424    .text.ads1299_check_init:00000000 ads1299_check_init
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:576    .text.ads1299_check_init:000000f4 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:581    .text.ads1299_all_reg_read:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:587    .text.ads1299_all_reg_read:00000000 ads1299_all_reg_read
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:656    .text.ads1299_all_reg_read:00000054 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:661    .text.all_ads1299_reg_read:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:667    .text.all_ads1299_reg_read:00000000 all_ads1299_reg_read
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:835    .text.all_ads1299_reg_read:000000fc $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:840    .text.calcCRC:00000000 $t
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:846    .text.calcCRC:00000000 calcCRC
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:895    .text.calcCRC:00000020 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:914    .data.ADS1x9x_Default_Register_Settings_2_5:00000000 ADS1x9x_Default_Register_Settings_2_5
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:906    .data.ADS1x9x_Default_Register_Settings_1:00000000 ADS1x9x_Default_Register_Settings_1
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:902    .data.ADS1x9x_Default_Register_Settings_1:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:910    .data.ADS1x9x_Default_Register_Settings_2_5:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:918    .rodata.crc8Table:00000000 $d
+C:\Users\MSI_NB\AppData\Local\Temp\ccsLs4Wi.s:922    .rodata.crc8Table:00000000 crc8Table
+
+UNDEFINED SYMBOLS
+CS_LOW
+HAL_SPI_TransmitReceive
+HAL_Delay
+CS_HIGH
+hspi3
+HAL_SPI_Transmit
+HAL_GPIO_WritePin
+USBD_CUSTOM_HID_SendReport_HS
+memset
