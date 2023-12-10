@@ -235,7 +235,7 @@ void all_ads1299_reg_read(void)
     HAL_SPI_TransmitReceive(&hspi3, data_send, reg_buffer + 96, 24, 100);
     CS_HIGH(5);
 
-    USBD_CUSTOM_HID_SendReport_HS(reg_buffer, 120);
+    USBD_CUSTOM_HID_SendReport_HS(reg_buffer, 120); //5*24，更改这里
 }
 
 // 按照 X^8+X^2+X^1+1 生成
