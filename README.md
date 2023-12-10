@@ -4,7 +4,7 @@ The experimental code presented herein is developed within the CubeMX and Visual
 
 By modifying the configuration of the ADS1299 registers and adjusting the data length in the USB buffer, the conversion between two distinct devices is accomplished. Specificall, change the following function to send the size of the packet, currently 5 * 24, changed to 8 * 24. And add the last three chips of the register to read and write procedures：
 
-USBD_CUSTOM_HID_SendReport_HS(reg_buffer, 120)。
+USBD_CUSTOM_HID_SendReport_HS(reg_buffer, 120).
 
 40 channel EEG acquisition device
 ![Alt text](image.png)
